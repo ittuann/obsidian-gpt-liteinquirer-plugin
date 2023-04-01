@@ -1,5 +1,5 @@
 {
-	"name": "lightweight-chatgpt-plugin",
+	"name": "lightweight-chatgpt",
 	"version": "1.0.0",
 	"description": "Experience OpenAI ChatGPT assistance directly within Obsidian, drafting content without interrupting your creative flow.",
 	"main": "main.js",

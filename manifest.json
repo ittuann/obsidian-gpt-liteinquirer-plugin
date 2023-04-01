@@ -1,6 +1,6 @@
 {
-	"id": "lightweight-chatgpt-plugin",
-	"name": "Lightweight ChatGPT Plugin",
+	"id": "lightweight-chatgpt",
+	"name": "Lightweight ChatGPT",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "Experience OpenAI ChatGPT assistance directly within Obsidian, drafting content without interrupting your creative flow.",
