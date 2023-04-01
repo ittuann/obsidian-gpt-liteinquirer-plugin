@@ -11,13 +11,16 @@
       "plugin:@typescript-eslint/recommended"
     ], 
     "parserOptions": {
-        "sourceType": "module"
+        "sourceType": "module",
+        "ecmaVersion": 12
     },
     "rules": {
       "no-unused-vars": "off",
+      "no-mixed-spaces-and-tabs": "error",
       "@typescript-eslint/no-unused-vars": ["error", { "args": "none" }],
       "@typescript-eslint/ban-ts-comment": "off",
       "no-prototype-builtins": "off",
-      "@typescript-eslint/no-empty-function": "off"
+      "@typescript-eslint/no-empty-function": "off",
+      "@typescript-eslint/no-extra-semi": "error"
     } 
   }

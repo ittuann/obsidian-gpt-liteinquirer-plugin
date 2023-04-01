@@ -1,11 +1,11 @@
 {
-	"id": "obsidian-sample-plugin",
-	"name": "Sample Plugin",
+	"id": "lightweight-chatgpt-plugin",
+	"name": "Lightweight ChatGPT Plugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "This is a sample plugin for Obsidian. This plugin demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Experience OpenAI ChatGPT assistance directly within Obsidian, drafting content without interrupting your creative flow.",
+	"author": "ittuann",
+	"authorUrl": "https://github.com/ittuann",
+	"fundingUrl": "https://github.com/ittuann/obsidian-lightweight-chatgpt-plugin",
 	"isDesktopOnly": false
 }

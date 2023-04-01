@@ -1,81 +1,100 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
-// Remember to rename these classes and interfaces!
-
-interface MyPluginSettings {
-	mySetting: string;
+interface LightweightChatGPTPluginSettings {
+	apiKey: string;
+	maxTokens: number;
+	temperature: number;
+	chatGPTModel: string;
+	insertionMode: string;
+	showSidebarIcon: boolean;
 }
 
-const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+const DEFAULT_SETTINGS: LightweightChatGPTPluginSettings = {
+	apiKey: '',
+	maxTokens: 16,
+	temperature: 1.0,
+	chatGPTModel: 'gpt-3.5-turbo',
+	insertionMode: 'end',
+	showSidebarIcon: true
 }
 
-export default class MyPlugin extends Plugin {
-	settings: MyPluginSettings;
+export default class LightweightChatGPTPlugin extends Plugin {
+	settings: LightweightChatGPTPluginSettings;
+	ribbonIconEl: HTMLElement;
 
 	async onload() {
-		await this.loadSettings();
+		
+		try {
+			await this.loadSettings();
+		} catch (error) {
+			console.error('Error loading settings:', error);
+		}
 
-		// This creates an icon in the left ribbon.
-		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
-			// Called when the user clicks the icon.
-			new Notice('This is a notice!');
-		});
-		// Perform additional things with the ribbon
-		ribbonIconEl.addClass('my-plugin-ribbon-class');
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText('Status Bar Text');
-
-		// This adds a simple command that can be triggered anywhere
-		this.addCommand({
-			id: 'open-sample-modal-simple',
-			name: 'Open sample modal (simple)',
-			callback: () => {
-				new SampleModal(this.app).open();
+		this.app.workspace.onLayoutReady(() => {
+			if (this.settings.showSidebarIcon) {
+				this.addSidebarIcon();
 			}
 		});
-		// This adds an editor command that can perform some operation on the current editor instance
-		this.addCommand({
-			id: 'sample-editor-command',
-			name: 'Sample editor command',
-			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
-				editor.replaceSelection('Sample Editor Command');
-			}
-		});
-		// This adds a complex command that can check whether the current state of the app allows execution of the command
-		this.addCommand({
-			id: 'open-sample-modal-complex',
-			name: 'Open sample modal (complex)',
-			checkCallback: (checking: boolean) => {
-				// Conditions to check
-				const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
-				if (markdownView) {
-					// If checking is true, we're simply "checking" if the command can be run.
-					// If checking is false, then we want to actually perform the operation.
-					if (!checking) {
-						new SampleModal(this.app).open();
-					}
 
-					// This command will only show up in Command Palette when the check function returns true
-					return true;
+        this.addCommand({
+            id: 'lightweight-chatgpt-window-hotkey',
+            name: 'Open Lightweight ChatGPT Plugin Window',
+            callback: () => {
+				try {
+					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
+				} catch (error) {
+					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
 				}
-			}
-		});
+			},
+            hotkeys: [
+                {
+                    modifiers: ['Alt'],
+                    key: 'c',
+                },
+            ],
+        });
 
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		// Add a settings tab for user configuration
+		try {
+			this.addSettingTab(new LightweightChatGPTSettingTab(this.app, this));
+		} catch (error) {
+			console.error('Error adding settings tab:', error);
+		}
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
-		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
-		});
-
+		// this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+		// 	console.log('click', evt);
+		// });
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
-		this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+		// this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
+	}
+
+	addSidebarIcon() {
+		try {
+			this.ribbonIconEl = this.addRibbonIcon('feather', 'Lightweight ChatGPT Plugin Window', (evt: MouseEvent) => {
+				try {
+					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
+				} catch (error) {
+					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
+				}
+			});
+		} catch (error) {
+			console.error('Error adding sidebar icon:', error);
+		}
+
+		// Perform additional things with the ribbon
+		this.ribbonIconEl.addClass('lightweight-chatgpt-ribbon-class');
+	}
+
+	removeSidebarIcon() {
+		if (this.ribbonIconEl) {
+			try {
+				this.ribbonIconEl.remove();
+			} catch (error) {
+				console.error('Error closing sidebar icon:', error);
+			}
+		}
 	}
 
 	onunload() {
@@ -91,47 +110,410 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
+
+
+class LightweightChatGPTWindow extends Modal {
+	private inputTextArea: HTMLTextAreaElement;
+	private outputContainer: HTMLElement;
+	private maxTokensInput: HTMLInputElement;
+	private apiKey: string;
+	private temperature: number;
+	private maxTokens: number;
+	private responseAPIText: string;
+	private insertionMode: string;
+
+	constructor(app: App, apiKey: string, temperature: number, maxTokens: number, insertionMode: string) {
 		super(app);
+		this.apiKey = apiKey;
+		this.temperature = temperature;
+		this.maxTokens = maxTokens;
+		this.insertionMode = insertionMode;
 	}
 
 	onOpen() {
-		const {contentEl} = this;
-		contentEl.setText('Woah!');
+		const { contentEl } = this;
+
+		contentEl.createEl('h2', { text: 'Lightweight ChatGPT Plugin Window' });
+
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		const selectedText = activeView ? activeView.editor.getSelection() : '';
+
+		this.inputTextArea = contentEl.createEl('textarea');
+		this.inputTextArea.rows = 4;
+		this.inputTextArea.style.width = '100%';
+		this.inputTextArea.placeholder = 'Enter your text here ...';
+		this.inputTextArea.value = selectedText ? `${selectedText}\n====\n` : '';
+
+		this.inputTextArea.addEventListener('keydown', (event) => {
+			if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
+				event.preventDefault();
+				this.insertAtCursor(this.inputTextArea, '\n');
+			} else if (event.key === 'Enter' && event.ctrlKey) {
+                event.preventDefault();
+				sendButton.click();
+            }
+		});
+
+		contentEl.createEl('hr');
+
+		// Max Tokens
+		const maxTokensContainer = contentEl.createEl('div');
+		maxTokensContainer.style.display = 'flex';
+		maxTokensContainer.style.justifyContent = 'space-between';
+		maxTokensContainer.style.alignItems = 'center';
+		maxTokensContainer.style.marginTop = '1rem';
+
+		const maxTokensLabelContainer = maxTokensContainer.createEl('div');
+		maxTokensLabelContainer.createEl('label', { text: 'Max tokens:' });
+        const maxTokensDescription = maxTokensLabelContainer.createEl('p', { text: 'Max OpenAI ChatGpt Tokens' });
+        maxTokensDescription.style.fontSize = '0.8rem';
+        maxTokensDescription.style.marginTop = '0.25rem';
+		maxTokensDescription.style.marginRight = '0.5rem';
+
+		this.maxTokensInput = maxTokensContainer.createEl('input', { type: 'number' });
+		this.maxTokensInput.placeholder = 'Enter max Tokens number';
+		this.maxTokensInput.style.width = '40%';
+		this.maxTokensInput.style.height = 'calc(1.5em + 1.25em)'; // sum of label and description line heights
+		this.maxTokensInput.style.textAlign = 'right';
+		this.maxTokensInput.min = "1";
+		this.maxTokensInput.max = "2048";
+		this.maxTokensInput.value = this.maxTokens.toString();
+
+		// Listener for maxTokensInput input event
+		this.maxTokensInput.addEventListener('input', () => {
+			if (parseInt(this.maxTokensInput.value) > parseInt(this.maxTokensInput.max)) {
+                this.maxTokensInput.value = this.maxTokensInput.max;
+                new Notice(`Max tokens cannot exceed ${this.maxTokensInput.max}`);
+            } else if (!parseInt(this.maxTokensInput.value) && parseInt(this.maxTokensInput.value) < parseInt(this.maxTokensInput.min)) {
+                this.maxTokensInput.value = this.maxTokensInput.min;
+                new Notice(`Max tokens cannot be less than ${this.maxTokensInput.min}`);
+            }
+        });
+
+		// Send Button
+		const buttonSendContainer = contentEl.createEl('div');
+		buttonSendContainer.style.marginTop = '1rem';
+		const sendButton = buttonSendContainer.createEl('button', { 
+			text: 'Send'
+		}, (el: HTMLButtonElement) => {
+			el.style.backgroundColor = 'green';
+			el.style.color = 'white';
+		});
+
+		const responseDivider = contentEl.createEl('hr');
+		responseDivider.style.display = 'none';
+
+		// Output Container
+		this.outputContainer = contentEl.createEl('div');
+		this.outputContainer.style.whiteSpace = 'pre-wrap';
+		this.outputContainer.style.userSelect = 'text';
+
+		// Add Other Button
+		const buttonsContainer = contentEl.createEl('div');
+		buttonsContainer.style.display = 'flex';
+		buttonsContainer.style.marginTop = '1rem';
+		const copyToClipboardButton = buttonsContainer.createEl('button', { 
+			text: 'Copy to clipboard'
+		}, (el: HTMLButtonElement) => {
+			el.style.backgroundColor = 'green';
+			el.style.color = 'white';
+		});
+		copyToClipboardButton.style.marginRight = '1rem';
+		copyToClipboardButton.style.display = 'none';
+		const addToPostButton = buttonsContainer.createEl('button', { text: 'Add to current document' });
+		addToPostButton.style.marginRight = '1rem';
+		addToPostButton.style.display = 'none';
+		
+		// Listener for sendButton click event
+		sendButton.addEventListener('click', async () => {
+			if (!parseInt(this.maxTokensInput.value)) {
+				new Notice(`Use the default value of ${this.maxTokens.toString()} for max Tokens`);
+				this.maxTokensInput.value = this.maxTokens.toString();
+			}
+
+			if (!this.inputTextArea.value) {
+				new Notice('Please Enter text');
+				return;
+			}
+
+			sendButton.textContent = 'Sending ...';
+			sendButton.textContent = 'Waiting for API full response ...';
+			copyToClipboardButton.style.display = 'none';
+			addToPostButton.style.display = 'none';
+			responseDivider.style.display = 'none';
+			
+			try {
+				this.responseAPIText = await this.sendRequestToChatGPT();
+				sendButton.textContent = 'Send';
+				copyToClipboardButton.style.display = 'block';
+				addToPostButton.style.display = 'block';
+				responseDivider.style.display = 'block';
+			} catch (error) {
+				sendButton.textContent = 'Send';
+				// new Notice('Error during API request: ' + error.message);
+			}
+		});
+
+		copyToClipboardButton.addEventListener('click', () => {
+			this.copyToClipboard(this.responseAPIText);
+		});
+
+		addToPostButton.addEventListener('click', () => {
+			this.appendToCurrentNote(this.inputTextArea.value, this.responseAPIText, this.insertionMode);
+		});
+	}
+
+	async sendRequestToChatGPT() {
+		if (!this.apiKey) {
+			new Notice('Please enter your API key in the plugin settings.');
+			return;
+		}
+		this.outputContainer.empty();
+
+		new Notice('Sending...');
+		const apiUrl = 'https://api.openai.com/v1/chat/completions';
+		const maxTokens = parseInt(this.maxTokensInput.value);
+		try {
+			const response = await fetch(apiUrl, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${this.apiKey}`
+				},
+				body: JSON.stringify({
+					model: 'gpt-3.5-turbo',
+					max_tokens: maxTokens,
+					temperature: this.temperature,
+					messages: [
+						{ role: 'user', content: this.inputTextArea.value }
+					]
+				})
+			});
+
+			if (response.ok) {
+				const result = await response.json();
+				const gptResponse = result.choices[0].message.content;
+				
+				// Display the response in the output container
+				this.outputContainer.empty();
+				this.outputContainer.createEl('p', { text: gptResponse });
+				return gptResponse;
+			} else {
+				throw new Error(`API request failed with status: ${response.status}`);
+			}
+		} catch (error) {
+			// Handle errors
+			console.error('Error during API request:', error);
+			new Notice('Error during API request: ' + error.message);
+		}
+	}
+
+	insertAtCursor(textArea: HTMLTextAreaElement, text: string) {
+        const startPos = textArea.selectionStart;
+        const endPos = textArea.selectionEnd;
+
+        textArea.value = textArea.value.substring(0, startPos) + text + textArea.value.substring(endPos, textArea.value.length);
+        textArea.selectionStart = startPos + text.length;
+        textArea.selectionEnd = startPos + text.length;
+    }
+
+	async appendToCurrentNote(sentText: string, receivedText: string, insertionMode: string) {
+		const receivedAPIText = receivedText || '';
+		if (receivedAPIText.length <= 0) {
+			new Notice('No text to add');
+			return;
+		}
+
+		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+		const activeLeaf = activeView?.leaf;
+		if (activeView && activeLeaf && activeLeaf.view instanceof MarkdownView) {
+			const editor = activeLeaf.view.editor;
+
+			// const formattedText = `\n---\n\n${sentText}\n\n${receivedAPIText}\n\n---\n`;
+			const formattedText = `\n---\n\n${receivedAPIText}\n\n---\n`;
+
+			if (insertionMode === 'end') {
+				const lastLine = editor.lastLine();
+				editor.replaceRange(formattedText, { line: lastLine + 1, ch: 0 });
+			} else if (insertionMode === 'current') {
+				const cursorPosition = editor.getCursor();
+				const currentLine = cursorPosition.line;
+				editor.replaceRange(formattedText, { line: currentLine + 1, ch: 0 });
+			}
+
+		} else {
+			new Notice('Cannot append content to the current view. Please open a markdown note.');
+		}
+	}
+
+	async copyToClipboard(receivedText: string) {
+		const receivedAPIText = receivedText || '';
+		if (receivedAPIText.length > 0) {
+			navigator.clipboard.writeText(receivedAPIText).then(() => {
+				new Notice('Copied to clipboard!');
+			}).catch((error) => {
+				console.error('Error copying to clipboard:', error);
+				new Notice('Error copying to clipboard');
+			});
+		} else {
+			new Notice('No text to copy');
+		}
 	}
 
 	onClose() {
-		const {contentEl} = this;
+		const { contentEl } = this;
 		contentEl.empty();
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+class LightweightChatGPTSettingTab extends PluginSettingTab {
+	plugin: LightweightChatGPTPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: LightweightChatGPTPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
-		const {containerEl} = this;
+		const { containerEl } = this;
 
 		containerEl.empty();
 
-		containerEl.createEl('h2', {text: 'Settings for my awesome plugin.'});
+		containerEl.createEl('h2', { text: 'Settings Lightweight ChatGPT Window' });
 
 		new Setting(containerEl)
-			.setName('Setting #1')
-			.setDesc('It\'s a secret')
+			.setName('OpenAI API Key')
+			.setDesc('Enter your OpenAI API key')
 			.addText(text => text
-				.setPlaceholder('Enter your secret')
-				.setValue(this.plugin.settings.mySetting)
+				.setPlaceholder('Enter your API key')
+				.setValue(this.plugin.settings.apiKey)
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.apiKey = value;
 					await this.plugin.saveSettings();
 				}));
+		
+		new Setting(containerEl)
+			.setName('Default Max Tokens')
+			.setDesc('Enter the maximum number of tokens for the API response (integer, min: 1, max: 2048)')
+			.addText(text => text
+				.setPlaceholder('Enter max tokens')
+				.setValue(this.plugin.settings.maxTokens.toString())
+				.onChange(async (value) => {
+					let parsedValue = parseInt(value);
+					if (parsedValue < 1) {
+						parsedValue = 1;
+					} else if (parsedValue > 2048) {
+						parsedValue = 2048;
+					}
+					this.plugin.settings.maxTokens = parsedValue;
+					await this.plugin.saveSettings();
+				}));
+	
+		new Setting(containerEl)
+			.setName('Temperature')
+			.setDesc('Enter the temperature value between 0 and 2 (inclusive) for the API response')
+			.addText(text => text
+				.setPlaceholder('Enter temperature')
+				.setValue(this.plugin.settings.temperature.toString())
+				.onChange(async (value) => {
+					let parsedValue = parseFloat(value);
+					if (parsedValue < 0) {
+						parsedValue = 0;
+					} else if (parsedValue > 2) {
+						parsedValue = 2;
+					}
+					this.plugin.settings.temperature = parsedValue ;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('OpenAI Model')
+			.setDesc('Select the OpenAI model to use')
+			.addDropdown(dropDown => dropDown
+				.addOption('gpt-3.5-turbo', 'gpt-3.5-turbo')
+				.setValue(this.plugin.settings.chatGPTModel)
+				.onChange(async (value) => {
+					this.plugin.settings.chatGPTModel = value;
+					await this.plugin.saveSettings();
+				}));
+		
+		new Setting(containerEl)
+			.setName('Insertion Mode')
+			.setDesc('Choose how to insert text')
+			.addDropdown(dropdown => dropdown
+				.addOption('end', 'Insert at end of document')
+				.addOption('current', 'Insert at current position')
+				.setValue(this.plugin.settings.insertionMode)
+				.onChange(async (value) => {
+					this.plugin.settings.insertionMode = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('Show Sidebar Icon')
+			.setDesc('Toggle to show or hide the sidebar icon')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.showSidebarIcon)
+				.onChange(async (value) => {
+					this.plugin.settings.showSidebarIcon = value;
+					await this.plugin.saveSettings();
+					if (value) {
+						this.plugin.addSidebarIcon();
+					} else {
+						this.plugin.removeSidebarIcon();
+					}
+				}));
+		
+		const politeMessage = containerEl.createEl('p', {
+			cls: 'polite-message',
+		});
+		politeMessage.textContent = 'If you enjoy this plugin or would like to show your support, please consider giving it a free star on GitHub~ Your appreciation means a lot to me!';
+		// politeMessage.style.textAlign = 'center';
+		politeMessage.style.marginBottom = '1rem';
+		politeMessage.style.fontStyle = 'italic';
+		
+		const githubLink = containerEl.createEl('div', {
+			cls: 'github-link-container',
+		});
+		const githubAnchor = githubLink.createEl('a', {
+			cls: 'github-link',
+		});
+		githubAnchor.href = 'https://github.com/ittuann/obsidian-lightweight-chatgpt-plugin';
+		githubAnchor.target = '_blank';
+		githubAnchor.rel = 'noopener';
+		// const githubLogo = githubAnchor.createEl('img', {
+		// 	cls: 'github-logo',
+		// });
+		// githubLogo.src = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+		// githubLogo.alt = 'GitHub';
+		// githubLogo.style.width = '24px';
+		// githubLogo.style.height = '24px';
+		// githubLogo.style.verticalAlign = 'middle';
+		// githubLogo.style.marginRight = '4px';
+		githubAnchor.createEl('span', {
+			text: 'View on GitHub',
+		});
+		const style = document.createElement('style');
+		style.innerHTML = `
+			.github-link-container {
+				margin-top: 2rem;
+				text-align: center;
+			}
+			.github-link {
+				color: #0366d6;
+				text-decoration: none;
+				border: 1px solid #0366d6;
+				border-radius: 4px;
+				padding: 0.5rem 1rem;
+				font-weight: bold;
+				transition: all 0.3s;
+			}
+			.github-link:hover {
+				background-color: #0366d6;
+				color: white;
+				text-decoration: none;
+			}
+		`;
+		containerEl.appendChild(style);
 	}
 }
