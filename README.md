@@ -1,11 +1,15 @@
 # Lightweight ChatGPT Plugin for Obsidian
 
+[![build](https://img.shields.io/github/actions/workflow/status/ittuann/obsidian-lightweight-chatgpt-plugin/build.yml?branch=master&label=Build%20Status&logo=github&style=for-the-badge)](https://github.com/ittuann/obsidian-lightweight-chatgpt-plugin)
+
 With this Lightweight ChatGPT Plugin, you can quickly and senselessly generate ideas, draft content, or get assistance from the ChatGPT AI, all without leaving Obsidian, without interrupt your creative flow.
 
 The Lightweight ChatGPT Plugin is a fast, easy-to-use, and non-intrusive AI assistant plugin, which senselessly integrates OpenAI's ChatGPT API directly into Obsidian.
 
-If you enjoy this plugin or would like to show your support, please consider giving it a free star on GitHub ~
+If you enjoy this plugin or would like to show your support, please consider giving it a free star on GitHub~
 
+
+**View and download this plugin: [Click here](https://obsidian.md/plugins?id=lightweight-chatgpt-plugin)**
 
 
 ## Features
@@ -32,15 +36,13 @@ You need to first set your own OpenAI API key in the Plugin Settings , so that t
 
 To download Obsidian: [Click here](https://www.obsidian.md/)
 
-To view the plugin page: [Click here](https://obsidian.md/plugins?id=lightweight-chatgpt-plugin)
-
 ## Usage
 
 You can open the Lightweight ChatGPT Plugin window in three ways:
 
 - By clicking on the Obsidian ribbon on the left. 
 
-- By the keyboard shortcuts `ALT + C	`.
+- By the keyboard shortcuts `ALT + C`.
 - By the Obsidian command `Open Lightweight ChatGPT Plugin Window`.
 
 In the Lightweight ChatGPT Plugin Window, the content you selected in the current Markdown document will be copied to the text box automatically. So you can use this text to ask questions or perform other operations, or directly write down anything you want to say.
@@ -48,7 +50,7 @@ In the Lightweight ChatGPT Plugin Window, the content you selected in the curren
 Tips: You can also send content directly using the `CTRL + ENTER` shortcut.
 
 
-
+---
 
 
 Lightweight ChatGPT Plugin for Obsidian wants to be a nice companion to boost your creativity and productivity. Experience the seamless AI-enhanced writing and content generation capabilities within Obsidian today!
