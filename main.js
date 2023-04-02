@@ -73,7 +73,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
   }
   addSidebarIcon() {
     try {
-      this.ribbonIconEl = this.addRibbonIcon("feather", "Lightweight ChatGPT Plugin Window", (evt) => {
+      this.ribbonIconEl = this.addRibbonIcon("feather", "GPT-LiteInquirer", (evt) => {
         try {
           new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
         } catch (error) {
@@ -117,8 +117,8 @@ var LightweightChatGPTWindow = class extends import_obsidian.Modal {
     const activeView = this.app.workspace.getActiveViewOfType(import_obsidian.MarkdownView);
     const selectedText = activeView ? activeView.editor.getSelection() : "";
     this.inputTextArea = contentEl.createEl("textarea");
-    this.inputTextArea.rows = 4;
     this.inputTextArea.style.width = "100%";
+    this.inputTextArea.rows = 4;
     this.inputTextArea.placeholder = "Enter your text here ...";
     this.inputTextArea.value = selectedText ? `${selectedText}
 ====
@@ -134,10 +134,7 @@ var LightweightChatGPTWindow = class extends import_obsidian.Modal {
     });
     contentEl.createEl("hr");
     const maxTokensContainer = contentEl.createEl("div");
-    maxTokensContainer.style.display = "flex";
-    maxTokensContainer.style.justifyContent = "space-between";
-    maxTokensContainer.style.alignItems = "center";
-    maxTokensContainer.style.marginTop = "1rem";
+    maxTokensContainer.className = "max-tokens-container";
     const maxTokensLabelContainer = maxTokensContainer.createEl("div");
     maxTokensLabelContainer.createEl("label", { text: "Max tokens:" });
     const maxTokensDescription = maxTokensLabelContainer.createEl("p", { text: "Max OpenAI ChatGpt Tokens" });
@@ -374,7 +371,7 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
     const githubAnchor = githubLink.createEl("a", {
       cls: "github-link"
     });
-    githubAnchor.href = "https://github.com/ittuann/obsidian-lightweight-chatgpt-plugin";
+    githubAnchor.href = "https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin";
     githubAnchor.target = "_blank";
     githubAnchor.rel = "noopener";
     githubAnchor.createEl("span", {

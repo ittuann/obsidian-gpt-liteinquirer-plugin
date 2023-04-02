@@ -1,5 +1,7 @@
 import { App, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
 
+
+
 interface LightweightChatGPTPluginSettings {
 	apiKey: string;
 	maxTokens: number;
@@ -23,7 +25,7 @@ export default class LightweightChatGPTPlugin extends Plugin {
 	ribbonIconEl: HTMLElement;
 
 	async onload() {
-		
+
 		try {
 			await this.loadSettings();
 		} catch (error) {
@@ -72,7 +74,7 @@ export default class LightweightChatGPTPlugin extends Plugin {
 
 	addSidebarIcon() {
 		try {
-			this.ribbonIconEl = this.addRibbonIcon('feather', 'Lightweight ChatGPT Plugin Window', (evt: MouseEvent) => {
+			this.ribbonIconEl = this.addRibbonIcon('feather', 'GPT-LiteInquirer', (evt: MouseEvent) => {
 				try {
 					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
 				} catch (error) {
@@ -139,8 +141,8 @@ class LightweightChatGPTWindow extends Modal {
 		const selectedText = activeView ? activeView.editor.getSelection() : '';
 
 		this.inputTextArea = contentEl.createEl('textarea');
-		this.inputTextArea.rows = 4;
 		this.inputTextArea.style.width = '100%';
+		this.inputTextArea.rows = 4;
 		this.inputTextArea.placeholder = 'Enter your text here ...';
 		this.inputTextArea.value = selectedText ? `${selectedText}\n====\n` : '';
 
@@ -158,10 +160,8 @@ class LightweightChatGPTWindow extends Modal {
 
 		// Max Tokens
 		const maxTokensContainer = contentEl.createEl('div');
-		maxTokensContainer.style.display = 'flex';
-		maxTokensContainer.style.justifyContent = 'space-between';
-		maxTokensContainer.style.alignItems = 'center';
-		maxTokensContainer.style.marginTop = '1rem';
+		// maxTokensContainer.style.marginRight = '0.5rem';
+		maxTokensContainer.className = "max-tokens-container";
 
 		const maxTokensLabelContainer = maxTokensContainer.createEl('div');
 		maxTokensLabelContainer.createEl('label', { text: 'Max tokens:' });
@@ -478,7 +478,7 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 		const githubAnchor = githubLink.createEl('a', {
 			cls: 'github-link',
 		});
-		githubAnchor.href = 'https://github.com/ittuann/obsidian-lightweight-chatgpt-plugin';
+		githubAnchor.href = 'https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin';
 		githubAnchor.target = '_blank';
 		githubAnchor.rel = 'noopener';
 		// const githubLogo = githubAnchor.createEl('img', {
