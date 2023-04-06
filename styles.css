@@ -1,6 +1,40 @@
+/* Input Textarea */
+.gpt-input-textarea {
+    width: 100%;
+}
+
+/* Max Tokens */
+.max-tokens-container,
+.max-tokens-input {
+	margin-right: 1rem;
+}
+
 .max-tokens-container {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-top: 1rem;
+}
+
+.max-tokens-description {
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    margin-right: 0.5rem;
+}
+
+.max-tokens-input {
+    width: 40%;
+    height: calc(1.5em + 1.25em);
+    text-align: right;
+}
+
+/* Output Container */
+.output-container {
+    white-space: pre-wrap;
+    user-select: text;
+}
+
+/* Buttons */
+.buttons-container {
+    display: flex;
+    margin-top: 1rem;
 }

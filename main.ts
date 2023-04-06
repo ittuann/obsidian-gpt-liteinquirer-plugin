@@ -1,4 +1,13 @@
-import { App, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import {
+	App,
+	MarkdownView,
+	Modal,
+	Notice,
+	Plugin,
+	PluginSettingTab,
+	Setting,
+	request
+} from 'obsidian';
 
 
 
@@ -39,24 +48,23 @@ export default class LightweightChatGPTPlugin extends Plugin {
 		});
 
         this.addCommand({
-            id: 'lightweight-chatgpt-window-hotkey',
-            name: 'Open Lightweight ChatGPT Plugin Window',
+            id: 'open-lightweight-window',
+            name: 'Open Lightweight Window',
             callback: () => {
 				try {
 					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
 				} catch (error) {
 					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
 				}
-			},
-            hotkeys: [
-                {
-                    modifiers: ['Alt'],
-                    key: 'c',
-                },
-            ],
+			}
+            // hotkeys: [
+            //     {
+            //         modifiers: ['CTRL'],
+            //         key: 'k',
+            //     },
+            // ]
         });
 
-		// Add a settings tab for user configuration
 		try {
 			this.addSettingTab(new LightweightChatGPTSettingTab(this.app, this));
 		} catch (error) {
@@ -86,7 +94,7 @@ export default class LightweightChatGPTPlugin extends Plugin {
 		}
 
 		// Perform additional things with the ribbon
-		this.ribbonIconEl.addClass('lightweight-chatgpt-ribbon-class');
+		// this.ribbonIconEl.addClass('gpt-liteinquirer-ribbon-class');
 	}
 
 	removeSidebarIcon() {
@@ -135,13 +143,13 @@ class LightweightChatGPTWindow extends Modal {
 	onOpen() {
 		const { contentEl } = this;
 
-		contentEl.createEl('h2', { text: 'Lightweight ChatGPT Plugin Window' });
+		contentEl.createEl('h2', { text: 'GPT Lite Inquirer Window' });
 
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const selectedText = activeView ? activeView.editor.getSelection() : '';
 
 		this.inputTextArea = contentEl.createEl('textarea');
-		this.inputTextArea.style.width = '100%';
+		this.inputTextArea.classList.add('gpt-input-textarea')
 		this.inputTextArea.rows = 4;
 		this.inputTextArea.placeholder = 'Enter your text here ...';
 		this.inputTextArea.value = selectedText ? `${selectedText}\n====\n` : '';
@@ -160,21 +168,16 @@ class LightweightChatGPTWindow extends Modal {
 
 		// Max Tokens
 		const maxTokensContainer = contentEl.createEl('div');
-		// maxTokensContainer.style.marginRight = '0.5rem';
 		maxTokensContainer.className = "max-tokens-container";
 
 		const maxTokensLabelContainer = maxTokensContainer.createEl('div');
 		maxTokensLabelContainer.createEl('label', { text: 'Max tokens:' });
         const maxTokensDescription = maxTokensLabelContainer.createEl('p', { text: 'Max OpenAI ChatGpt Tokens' });
-        maxTokensDescription.style.fontSize = '0.8rem';
-        maxTokensDescription.style.marginTop = '0.25rem';
-		maxTokensDescription.style.marginRight = '0.5rem';
+        maxTokensDescription.classList.add('max-tokens-description');
 
 		this.maxTokensInput = maxTokensContainer.createEl('input', { type: 'number' });
 		this.maxTokensInput.placeholder = 'Enter max Tokens number';
-		this.maxTokensInput.style.width = '40%';
-		this.maxTokensInput.style.height = 'calc(1.5em + 1.25em)'; // sum of label and description line heights
-		this.maxTokensInput.style.textAlign = 'right';
+		this.maxTokensInput.classList.add('max-tokens-input');
 		this.maxTokensInput.min = "1";
 		this.maxTokensInput.max = "2048";
 		this.maxTokensInput.value = this.maxTokens.toString();
@@ -205,8 +208,7 @@ class LightweightChatGPTWindow extends Modal {
 
 		// Output Container
 		this.outputContainer = contentEl.createEl('div');
-		this.outputContainer.style.whiteSpace = 'pre-wrap';
-		this.outputContainer.style.userSelect = 'text';
+		this.outputContainer.classList.add('output-container');
 
 		// Add Other Button
 		const buttonsContainer = contentEl.createEl('div');
@@ -274,7 +276,8 @@ class LightweightChatGPTWindow extends Modal {
 		const apiUrl = 'https://api.openai.com/v1/chat/completions';
 		const maxTokens = parseInt(this.maxTokensInput.value);
 		try {
-			const response = await fetch(apiUrl, {
+			const response = await request({
+				url: apiUrl,
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
@@ -290,21 +293,25 @@ class LightweightChatGPTWindow extends Modal {
 				})
 			});
 
-			if (response.ok) {
-				const result = await response.json();
+			const result = JSON.parse(response);
+			if (result.choices && result.choices.length > 0) {
 				const gptResponse = result.choices[0].message.content;
-				
+		
 				// Display the response in the output container
 				this.outputContainer.empty();
 				this.outputContainer.createEl('p', { text: gptResponse });
 				return gptResponse;
+			} else if (result.error) {
+				throw new Error(JSON.stringify(result.error));
 			} else {
-				throw new Error(`API request failed with status: ${response.status}`);
+				throw new Error('Unexpected API response format');
 			}
 		} catch (error) {
 			// Handle errors
 			console.error('Error during API request:', error);
-			new Notice('Error during API request: ' + error.message);
+			new Notice(
+				'Error during API request: ' + error.message
+			);
 		}
 	}
 
@@ -469,8 +476,6 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 		});
 		politeMessage.textContent = 'If you enjoy this plugin or would like to show your support, please consider giving it a free star on GitHub~ Your appreciation means a lot to me!';
 		// politeMessage.style.textAlign = 'center';
-		politeMessage.style.marginBottom = '1rem';
-		politeMessage.style.fontStyle = 'italic';
 		
 		const githubLink = containerEl.createEl('div', {
 			cls: 'github-link-container',
@@ -495,6 +500,10 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 		});
 		const style = document.createElement('style');
 		style.innerHTML = `
+			.polite-message {
+				margin-bottom: 1rem;
+				font-style: italic;
+			}
 			.github-link-container {
 				margin-top: 2rem;
 				text-align: center;

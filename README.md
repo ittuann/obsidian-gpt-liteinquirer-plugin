@@ -33,8 +33,8 @@ If you enjoy this plugin or would like to show your support, please consider giv
 You need to first set your own OpenAI API key in the Plugin Settings , so that the plugin can work properly.
 
 1. Generate an OpenAI API key on the official website. [Click here](https://beta.openai.com/account/api-keys)
-2. In Obsidian, go to `Settings`, click `Community Plugins` in the left menu , and enable `Lightweight ChatGPT Plugin` in the Installed Plugins.
-3. Click the gear icon to enter the plugin settings. Then enter your API key in the `OpenAI API Key` field.
+2. In Obsidian, go to `Settings`, click `Community Plugins` in the left menu , and enable `GPT-LiteInquirer` in the Installed Plugins.
+3. Click the gear icon to enter the plugin settings. Then enter your API key in the `OpenAI API Key` field and then you're done! 🎉
 
 To download Obsidian: [Click here](https://www.obsidian.md/)
 
@@ -43,23 +43,23 @@ To download Obsidian: [Click here](https://www.obsidian.md/)
 You can open the Lightweight ChatGPT Plugin interface in three ways:
 
 - By clicking on the Obsidian ribbon on the left. 
+- By the Obsidian command `Open Lightweight Window`.
+- By manually set a keyboard shortcut for the command, such as `CTRL + K`.
 
-- By the keyboard shortcuts `ALT + C`.
-- By the Obsidian command `Open Lightweight ChatGPT Plugin Window`.
-
-In the Lightweight ChatGPT Plugin Window, the content you selected in the current Markdown document will be copied to the text box automatically. So you can use this text to ask questions or perform other operations, or directly write down anything you want to say.
+In the GPT Lite Inquirer Window, the content you selected in the current Markdown document will be copied to the text box automatically. So you can use this text to ask questions or perform other operations, or directly write down anything you want to say.
 
 Tips: You can also send content directly using the `CTRL + ENTER` shortcut.
 
 
 ---
 
-- TODO List:
+TODO List:
 
-  - Add support for Azure API
+- [ ] Add configuration default Prompt 
+
+- [ ] Add support for Azure API
+
+- [ ] Add support for GPT-4
 
 
-  - Add support for GPT-4
-
-
-Lightweight ChatGPT Plugin for Obsidian wants to be a nice companion to boost your creativity and productivity. Experience the seamless AI-enhanced writing and content generation capabilities within Obsidian today!
+GPT-LiteInquirer Plugin for Obsidian wants to be a nice companion to boost your creativity and productivity. Experience the seamless AI-enhanced writing and content generation capabilities within Obsidian today!
