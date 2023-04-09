@@ -52,7 +52,7 @@ export default class LightweightChatGPTPlugin extends Plugin {
             name: 'Open Lightweight Window',
             callback: () => {
 				try {
-					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
+					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.chatGPTModel, this.settings.insertionMode).open();
 				} catch (error) {
 					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
 				}
@@ -84,7 +84,7 @@ export default class LightweightChatGPTPlugin extends Plugin {
 		try {
 			this.ribbonIconEl = this.addRibbonIcon('feather', 'GPT-LiteInquirer', (evt: MouseEvent) => {
 				try {
-					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
+					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.chatGPTModel, this.settings.insertionMode).open();
 				} catch (error) {
 					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
 				}
@@ -131,12 +131,14 @@ class LightweightChatGPTWindow extends Modal {
 	private maxTokens: number;
 	private responseAPIText: string;
 	private insertionMode: string;
+	private chatGPTModel: string;
 
-	constructor(app: App, apiKey: string, temperature: number, maxTokens: number, insertionMode: string) {
+	constructor(app: App, apiKey: string, temperature: number, maxTokens: number, chatGPTModel: string, insertionMode: string) {
 		super(app);
 		this.apiKey = apiKey;
 		this.temperature = temperature;
 		this.maxTokens = maxTokens;
+		this.chatGPTModel = chatGPTModel;
 		this.insertionMode = insertionMode;
 	}
 
@@ -273,18 +275,19 @@ class LightweightChatGPTWindow extends Modal {
 		this.outputContainer.empty();
 
 		new Notice('Sending...');
-		const apiUrl = 'https://api.openai.com/v1/chat/completions';
+		const apiUrl = 'https://api.openai.com';
+		const apiUrlPatch = '/v1/chat/completions'
 		const maxTokens = parseInt(this.maxTokensInput.value);
 		try {
 			const response = await request({
-				url: apiUrl,
+				url: apiUrl + apiUrlPatch,
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 					'Authorization': `Bearer ${this.apiKey}`
 				},
 				body: JSON.stringify({
-					model: 'gpt-3.5-turbo',
+					model: this.chatGPTModel,
 					max_tokens: maxTokens,
 					temperature: this.temperature,
 					messages: [

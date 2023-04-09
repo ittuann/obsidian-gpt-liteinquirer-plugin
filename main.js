@@ -53,7 +53,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
       name: "Open Lightweight Window",
       callback: () => {
         try {
-          new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
+          new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.chatGPTModel, this.settings.insertionMode).open();
         } catch (error) {
           console.error("Error opening Lightweight ChatGPT Plugin Window:", error);
         }
@@ -75,7 +75,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
     try {
       this.ribbonIconEl = this.addRibbonIcon("feather", "GPT-LiteInquirer", (evt) => {
         try {
-          new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.insertionMode).open();
+          new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.chatGPTModel, this.settings.insertionMode).open();
         } catch (error) {
           console.error("Error opening Lightweight ChatGPT Plugin Window:", error);
         }
@@ -83,7 +83,6 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
     } catch (error) {
       console.error("Error adding sidebar icon:", error);
     }
-    this.ribbonIconEl.addClass("lightweight-chatgpt-ribbon-class");
   }
   removeSidebarIcon() {
     if (this.ribbonIconEl) {
@@ -104,11 +103,12 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
   }
 };
 var LightweightChatGPTWindow = class extends import_obsidian.Modal {
-  constructor(app, apiKey, temperature, maxTokens, insertionMode) {
+  constructor(app, apiKey, temperature, maxTokens, chatGPTModel, insertionMode) {
     super(app);
     this.apiKey = apiKey;
     this.temperature = temperature;
     this.maxTokens = maxTokens;
+    this.chatGPTModel = chatGPTModel;
     this.insertionMode = insertionMode;
   }
   onOpen() {
@@ -218,18 +218,19 @@ var LightweightChatGPTWindow = class extends import_obsidian.Modal {
     }
     this.outputContainer.empty();
     new import_obsidian.Notice("Sending...");
-    const apiUrl = "https://api.openai.com/v1/chat/completions";
+    const apiUrl = "https://api.openai.com";
+    const apiUrlPatch = "/v1/chat/completions";
     const maxTokens = parseInt(this.maxTokensInput.value);
     try {
       const response = await (0, import_obsidian.request)({
-        url: apiUrl,
+        url: apiUrl + apiUrlPatch,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${this.apiKey}`
         },
         body: JSON.stringify({
-          model: "gpt-3.5-turbo",
+          model: this.chatGPTModel,
           max_tokens: maxTokens,
           temperature: this.temperature,
           messages: [
