@@ -36,4 +36,6 @@ jobs:
       - name: Microsoft Inclusiveness Analyzer
         uses: microsoft/InclusivenessAnalyzer@main
         with:
-          excludeFiles: "**/package-lock.json"
+          excludeFiles: |
+            **/package-lock.json
+            **/.github/workflows/*.yml

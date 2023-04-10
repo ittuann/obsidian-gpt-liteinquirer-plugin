@@ -1,6 +1,6 @@
 # GPT-LiteInquirer Plugin for Obsidian
 
-[![build](https://img.shields.io/github/actions/workflow/status/ittuann/obsidian-gpt-liteinquirer-plugin/build.yml?branch=master&label=Build%20Status&logo=github&style=for-the-badge)](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin)
+[![CI](https://img.shields.io/github/actions/workflow/status/ittuann/obsidian-gpt-liteinquirer-plugin/CI.yml?branch=master&label=Build%20Status&logo=github&style=for-the-badge)](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin)
 
 With this GPT-LiteInquirer Plugin, you can quickly and senselessly generate ideas, draft content, or get assistance from the ChatGPT AI, all without leaving Obsidian, without interrupt your creative flow.
 
@@ -56,10 +56,9 @@ Tips: You can also send content directly using the `CTRL + ENTER` shortcut.
 TODO List:
 
 - [ ] Add configuration default Prompt 
-
 - [ ] Add support for Azure API
-
 - [ ] Add support for GPT-4
+- [ ] Add support for self-built API
 
 
 GPT-LiteInquirer Plugin for Obsidian wants to be a nice companion to boost your creativity and productivity. Experience the seamless AI-enhanced writing and content generation capabilities within Obsidian today!
