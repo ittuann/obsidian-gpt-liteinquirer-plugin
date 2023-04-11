@@ -1,6 +1,24 @@
 # GPT-LiteInquirer Plugin for Obsidian
 
-[![CI](https://img.shields.io/github/actions/workflow/status/ittuann/obsidian-gpt-liteinquirer-plugin/CI.yml?branch=master&label=Build%20Status&logo=github&style=for-the-badge)](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin)
+<div align="center">
+
+[![CI][ci-image]][ci-url]
+[![Code Scanning][code-scanning-image]][code-scanning-url]
+[![TAG][tag-image]][tag-url]
+
+[ci-image]: https://img.shields.io/github/actions/workflow/status/ittuann/obsidian-gpt-liteinquirer-plugin/CI.yml?branch=master&label=Build%20Status&logo=github&style=for-the-badge
+
+[ci-url]: https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin
+
+[code-scanning-image]: https://img.shields.io/github/actions/workflow/status/ittuann/obsidian-gpt-liteinquirer-plugin/CodeQL.yml?branch=master&label=Code%20Scanning&logo=github&style=for-the-badge
+
+[code-scanning-url]: https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin
+
+[tag-image]: https://img.shields.io/github/v/release/ittuann/obsidian-gpt-liteinquirer-plugin?branch=master&label=Release%20tag&logo=github&style=for-the-badge
+
+[tag-url]: https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin/releases
+
+</div>
 
 With this GPT-LiteInquirer Plugin, you can quickly and senselessly generate ideas, draft content, or get assistance from the ChatGPT AI, all without leaving Obsidian, without interrupt your creative flow.
 

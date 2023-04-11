@@ -7,8 +7,12 @@
 		"dev": "node esbuild.config.mjs",
 		"build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
 		"version": "node version-bump.mjs && git add manifest.json versions.json",
-		"lint": "eslint ."
+		"lint": "eslint .",
+		"pretty": "prettier ./**/*.{ts,mjs,jsx,json,css,scss}"
 	},
+	"pre-commit": [
+		"lint"
+	],
 	"keywords": [],
 	"author": "ittuann",
 	"license": "MIT",
@@ -21,6 +25,7 @@
 		"obsidian": "latest",
 		"tslib": "2.4.0",
 		"typescript": "4.7.4",
-		"eslint": "latest"
+		"eslint": "^8.36.0",
+		"prettier": "^2.8.4"
 	}
 }

@@ -5,6 +5,8 @@ on:
     branches: [master]
   pull_request:
     branches: [master]
+  schedule:
+    - cron: '0 8 * * 0'
 
 jobs:
   code-scanning:
@@ -32,6 +34,8 @@ jobs:
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
+        with:
+          category: "/language:typescript"
 
       - name: Microsoft Inclusiveness Analyzer
         uses: microsoft/InclusivenessAnalyzer@main

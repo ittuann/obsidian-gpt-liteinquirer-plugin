@@ -1,0 +1,26 @@
+name: FOSSA Analysis
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  fossa:
+    runs-on: ubuntu-latest
+    environment: staging
+
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Install FOSSA CLI
+        run: curl -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/fossas/fossa-cli/master/install-latest.sh | bash
+      - name: Configure FOSSA CLI
+        run: export FOSSA_API_KEY=${{ secrets.FOSSA_API }}
+        env:
+          FOSSA_API: ${{ secrets.FOSSA_API }}
+      - name: Analyze with FOSSA
+        run: fossa analyze
