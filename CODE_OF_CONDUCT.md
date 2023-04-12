@@ -16,19 +16,19 @@ As such, we pledge to be respectful, kind, and considerate towards other partici
 
 Examples of behavior that contribute to a positive environment include:
 
-* Using welcoming and inclusive language.
-* Being respectful of differing viewpoints and experiences.
-* Gracefully accepting constructive criticism.
-* Focusing on what is best for the community.
-* Showing empathy towards other community members.
+-   Using welcoming and inclusive language.
+-   Being respectful of differing viewpoints and experiences.
+-   Gracefully accepting constructive criticism.
+-   Focusing on what is best for the community.
+-   Showing empathy towards other community members.
 
 Examples of unacceptable behavior include:
 
-* The use of sexualized language or imagery and unwelcome sexual attention or advances.
-* Trolling, insulting/derogatory comments, and personal or political attacks.
-* Public or private harassment.
-* Publishing others' private information, such as a physical or email address, without their explicit permission.
-* Other conduct which could reasonably be considered inappropriate in a professional setting.
+-   The use of sexualized language or imagery and unwelcome sexual attention or advances.
+-   Trolling, insulting/derogatory comments, and personal or political attacks.
+-   Public or private harassment.
+-   Publishing others' private information, such as a physical or email address, without their explicit permission.
+-   Other conduct which could reasonably be considered inappropriate in a professional setting.
 
 ## 4. Enforcement Responsibilities
 
@@ -53,5 +53,3 @@ Project maintainers will follow the community impact guidelines of correction / 
 This Code of Conduct is adapted from the Contributor Covenant, version 2.0, available at https://www.contributor-covenant.org/version/2/0/code_of_conduct.html.
 
 Community Impact Guidelines were inspired by the Mozilla Community Participation Guidelines, available at https://www.mozilla.org/en-US/about/governance/policies/participation/.
-
-

@@ -2,16 +2,18 @@
 name: Feature Request
 about: Suggest an idea for this project
 title: "[Feature] "
-labels: ''
-assignees: ''
-
+labels: ""
+assignees: ""
 ---
 
 ## Please describe your idea.
+
 <!-- A clear and concise description of what the feature would do. -->
 
 ## Describe how the idea would be helpful
+
 <!-- A clear and concise description of how the feature would be helpful to users. -->
 
 ## Additional context
+
 <!-- Add any other context or screenshots about the feature request here. -->

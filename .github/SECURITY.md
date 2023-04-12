@@ -29,8 +29,8 @@ We appreciate your efforts to responsibly disclose your findings and will make e
 
 We kindly ask that you follow these guidelines when reporting a security vulnerability:
 
-- Allow reasonable time for the maintainers to address the vulnerability before disclosing it to the public or a third party.
-- Do not use the vulnerability for any malicious activities or to exploit it in any way.
-- Avoid posting sensitive information or details about the vulnerability in public forums, such as social media or chat platforms.
+-   Allow reasonable time for the maintainers to address the vulnerability before disclosing it to the public or a third party.
+-   Do not use the vulnerability for any malicious activities or to exploit it in any way.
+-   Avoid posting sensitive information or details about the vulnerability in public forums, such as social media or chat platforms.
 
 By following these guidelines, you can help ensure the security and stability of our project and protect our users.
