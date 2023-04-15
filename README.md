@@ -66,9 +66,9 @@ Tips: You can also send content directly using the `CTRL + ENTER` shortcut.
 
 TODO List:
 
--   [ ] Add configuration default Prompt
--   [ ] Add support for Azure API
+-   [*] Add configuration default Prompt
+-   [*] Add support for self-built API
 -   [ ] Add support for GPT-4
--   [ ] Add support for self-built API
+-   [ ] Add support for Azure API
 
 GPT-LiteInquirer Plugin for Obsidian wants to be a nice companion to boost your creativity and productivity. Experience the seamless AI-enhanced writing and content generation capabilities within Obsidian today!

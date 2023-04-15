@@ -13,18 +13,24 @@ import {
 
 interface LightweightChatGPTPluginSettings {
 	apiKey: string;
-	maxTokens: number;
-	temperature: number;
 	chatGPTModel: string;
+	apiUrl: string;
+	apiUrlPath: string;
+	temperature: number;
+	maxTokens: number;
+	defaultPrompt: string;
 	insertionMode: string;
 	showSidebarIcon: boolean;
 }
 
 const DEFAULT_SETTINGS: LightweightChatGPTPluginSettings = {
 	apiKey: '',
-	maxTokens: 16,
-	temperature: 1.0,
 	chatGPTModel: 'gpt-3.5-turbo',
+	apiUrl: 'https://api.openai.com',
+	apiUrlPath: '/v1/chat/completions',
+	temperature: 1.0,
+	maxTokens: 16,
+	defaultPrompt: '',
 	insertionMode: 'end',
 	showSidebarIcon: true
 }
@@ -52,7 +58,7 @@ export default class LightweightChatGPTPlugin extends Plugin {
             name: 'Open Lightweight Window',
             callback: () => {
 				try {
-					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.chatGPTModel, this.settings.insertionMode).open();
+					new LightweightChatGPTWindow(this.app, this).open();
 				} catch (error) {
 					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
 				}
@@ -84,7 +90,7 @@ export default class LightweightChatGPTPlugin extends Plugin {
 		try {
 			this.ribbonIconEl = this.addRibbonIcon('feather', 'GPT-LiteInquirer', (evt: MouseEvent) => {
 				try {
-					new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.chatGPTModel, this.settings.insertionMode).open();
+					new LightweightChatGPTWindow(this.app, this).open();
 				} catch (error) {
 					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
 				}
@@ -123,23 +129,18 @@ export default class LightweightChatGPTPlugin extends Plugin {
 
 
 class LightweightChatGPTWindow extends Modal {
+
+	plugin: LightweightChatGPTPlugin;
+
 	private inputTextArea: HTMLTextAreaElement;
 	private outputContainer: HTMLElement;
 	private maxTokensInput: HTMLInputElement;
-	private apiKey: string;
-	private temperature: number;
-	private maxTokens: number;
-	private responseAPIText: string;
-	private insertionMode: string;
-	private chatGPTModel: string;
 
-	constructor(app: App, apiKey: string, temperature: number, maxTokens: number, chatGPTModel: string, insertionMode: string) {
+	private responseAPIText: string;
+
+	constructor(app: App, plugin: LightweightChatGPTPlugin) {
 		super(app);
-		this.apiKey = apiKey;
-		this.temperature = temperature;
-		this.maxTokens = maxTokens;
-		this.chatGPTModel = chatGPTModel;
-		this.insertionMode = insertionMode;
+		this.plugin = plugin;
 	}
 
 	onOpen() {
@@ -154,7 +155,16 @@ class LightweightChatGPTWindow extends Modal {
 		this.inputTextArea.classList.add('gpt-input-textarea')
 		this.inputTextArea.rows = 4;
 		this.inputTextArea.placeholder = 'Enter your text here ...';
-		this.inputTextArea.value = selectedText ? `${selectedText}\n====\n` : '';
+
+		if (!this.plugin.settings.defaultPrompt && selectedText) {
+			this.inputTextArea.value = `${selectedText}\n----\n`;
+		} else if (this.plugin.settings.defaultPrompt && !selectedText) {
+			this.inputTextArea.value = `${this.plugin.settings.defaultPrompt}\n`;
+		} else if (this.plugin.settings.defaultPrompt && selectedText) {
+			this.inputTextArea.value = `${selectedText}\n----\n${this.plugin.settings.defaultPrompt}\n`;
+		} else {
+			this.inputTextArea.value = '';
+		}
 
 		this.inputTextArea.addEventListener('keydown', (event) => {
 			if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
@@ -182,7 +192,7 @@ class LightweightChatGPTWindow extends Modal {
 		this.maxTokensInput.classList.add('max-tokens-input');
 		this.maxTokensInput.min = "1";
 		this.maxTokensInput.max = "2048";
-		this.maxTokensInput.value = this.maxTokens.toString();
+		this.maxTokensInput.value = this.plugin.settings.maxTokens.toString();
 
 		// Listener for maxTokensInput input event
 		this.maxTokensInput.addEventListener('input', () => {
@@ -231,8 +241,8 @@ class LightweightChatGPTWindow extends Modal {
 		// Listener for sendButton click event
 		sendButton.addEventListener('click', async () => {
 			if (!parseInt(this.maxTokensInput.value)) {
-				new Notice(`Use the default value of ${this.maxTokens.toString()} for max Tokens`);
-				this.maxTokensInput.value = this.maxTokens.toString();
+				new Notice(`Use the default value of ${this.plugin.settings.maxTokens.toString()} for max Tokens`);
+				this.maxTokensInput.value = this.plugin.settings.maxTokens.toString();
 			}
 
 			if (!this.inputTextArea.value) {
@@ -263,33 +273,32 @@ class LightweightChatGPTWindow extends Modal {
 		});
 
 		addToPostButton.addEventListener('click', () => {
-			this.appendToCurrentNote(this.inputTextArea.value, this.responseAPIText, this.insertionMode);
+			this.appendToCurrentNote(this.inputTextArea.value, this.responseAPIText, this.plugin.settings.insertionMode);
 		});
 	}
 
 	async sendRequestToChatGPT() {
-		if (!this.apiKey) {
+		if (!this.plugin.settings.apiKey) {
 			new Notice('Please enter your API key in the plugin settings.');
 			return;
 		}
 		this.outputContainer.empty();
 
 		new Notice('Sending...');
-		const apiUrl = 'https://api.openai.com';
-		const apiUrlPatch = '/v1/chat/completions'
+
 		const maxTokens = parseInt(this.maxTokensInput.value);
 		try {
 			const response = await request({
-				url: apiUrl + apiUrlPatch,
+				url: this.plugin.settings.apiUrl + this.plugin.settings.apiUrlPath,
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${this.apiKey}`
+					'Authorization': `Bearer ${this.plugin.settings.apiKey}`
 				},
 				body: JSON.stringify({
-					model: this.chatGPTModel,
+					model: this.plugin.settings.chatGPTModel,
 					max_tokens: maxTokens,
-					temperature: this.temperature,
+					temperature: this.plugin.settings.temperature,
 					messages: [
 						{ role: 'user', content: this.inputTextArea.value }
 					]
@@ -392,7 +401,7 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 		containerEl.createEl('h2', { text: 'Settings Lightweight ChatGPT Window' });
 
 		new Setting(containerEl)
-			.setName('OpenAI API Key')
+			.setName('API Key*')
 			.setDesc('Enter your OpenAI API key')
 			.addText(text => text
 				.setPlaceholder('Enter your API key')
@@ -401,24 +410,42 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 					this.plugin.settings.apiKey = value;
 					await this.plugin.saveSettings();
 				}));
-		
+
 		new Setting(containerEl)
-			.setName('Default Max Tokens')
-			.setDesc('Enter the maximum number of tokens for the API response (integer, min: 1, max: 2048)')
-			.addText(text => text
-				.setPlaceholder('Enter max tokens')
-				.setValue(this.plugin.settings.maxTokens.toString())
+			.setName('OpenAI Model')
+			.setDesc('Select the OpenAI model to use')
+			.addDropdown(dropDown => dropDown
+				.addOption('gpt-3.5-turbo', 'gpt-3.5-turbo')
+				.setValue(this.plugin.settings.chatGPTModel)
 				.onChange(async (value) => {
-					let parsedValue = parseInt(value);
-					if (parsedValue < 1) {
-						parsedValue = 1;
-					} else if (parsedValue > 2048) {
-						parsedValue = 2048;
-					}
-					this.plugin.settings.maxTokens = parsedValue;
+					this.plugin.settings.chatGPTModel = value;
 					await this.plugin.saveSettings();
 				}));
-	
+
+		new Setting(containerEl)
+			.setName('API URL*')
+			.setDesc('Modify here if you want to use a self-built server, otherwise keep the default without any changes.')
+			.addText(text => text
+				.setPlaceholder('https://api.openai.com')
+				.setValue(this.plugin.settings.apiUrl)
+				.onChange(async (value) => {
+					this.plugin.settings.apiUrl = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
+			.setName('API URL Path*')
+			.setDesc('Modify here if you want to use a self-built server, otherwise keep the default without any changes.')
+			.addText(text => text
+				.setPlaceholder('/v1/chat/completions')
+				.setValue(this.plugin.settings.apiUrlPath)
+				.onChange(async (value) => {
+					this.plugin.settings.apiUrlPath = value;
+					await this.plugin.saveSettings();
+				}));
+
+		containerEl.createEl('h6', {text: 'ChatGPT Model setting'});
+
 		new Setting(containerEl)
 			.setName('Temperature')
 			.setDesc('Enter the temperature value between 0 and 2 (inclusive) for the API response')
@@ -437,16 +464,37 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
-			.setName('OpenAI Model')
-			.setDesc('Select the OpenAI model to use')
-			.addDropdown(dropDown => dropDown
-				.addOption('gpt-3.5-turbo', 'gpt-3.5-turbo')
-				.setValue(this.plugin.settings.chatGPTModel)
+			.setName('Default Max Tokens')
+			.setDesc('Enter the maximum number of tokens for the API response (integer, min: 1, max: 2048)')
+			.addText(text => text
+				.setPlaceholder('Enter max tokens')
+				.setValue(this.plugin.settings.maxTokens.toString())
 				.onChange(async (value) => {
-					this.plugin.settings.chatGPTModel = value;
+					let parsedValue = parseInt(value);
+					if (parsedValue < 1) {
+						parsedValue = 1;
+					} else if (parsedValue > 2048) {
+						parsedValue = 2048;
+					}
+					this.plugin.settings.maxTokens = parsedValue;
 					await this.plugin.saveSettings();
 				}));
-		
+
+		new Setting(containerEl)
+			.setName('Default Prompt')
+			.setDesc(
+				'The Default Prompt filled in here will be automatically inserted into the requested Prompt.'
+			)
+			.addTextArea(text => text
+				.setPlaceholder('Enter Default Prompt')
+				.setValue(this.plugin.settings.defaultPrompt)
+				.onChange(async (value) => {
+					this.plugin.settings.defaultPrompt = value;
+					await this.plugin.saveSettings();
+				}));
+
+		containerEl.createEl('h6', {text: 'Additional setting'});
+
 		new Setting(containerEl)
 			.setName('Insertion Mode')
 			.setDesc('Choose how to insert text')
@@ -475,57 +523,33 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 				}));
 		
 		const politeMessage = containerEl.createEl('p', {
-			cls: 'polite-message',
+			cls: 'settings-polite-message',
 		});
 		politeMessage.textContent = 'If you enjoy this plugin or would like to show your support, please consider giving it a free star on GitHub~ Your appreciation means a lot to me!';
-		// politeMessage.style.textAlign = 'center';
 		
 		const githubLink = containerEl.createEl('div', {
-			cls: 'github-link-container',
+			cls: 'settings-github-link-container',
 		});
 		const githubAnchor = githubLink.createEl('a', {
-			cls: 'github-link',
+			cls: 'settings-github-link',
+		});
+		const githubLogo = githubAnchor.createEl('img', {
+			cls: 'settings-github-logo',
 		});
 		githubAnchor.href = 'https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin';
 		githubAnchor.target = '_blank';
 		githubAnchor.rel = 'noopener';
-		// const githubLogo = githubAnchor.createEl('img', {
-		// 	cls: 'github-logo',
-		// });
-		// githubLogo.src = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
-		// githubLogo.alt = 'GitHub';
-		// githubLogo.style.width = '24px';
-		// githubLogo.style.height = '24px';
-		// githubLogo.style.verticalAlign = 'middle';
-		// githubLogo.style.marginRight = '4px';
-		githubAnchor.createEl('span', {
+
+		const githubText = githubAnchor.createEl('span', {
 			text: 'View on GitHub',
 		});
-		const style = document.createElement('style');
-		style.innerHTML = `
-			.polite-message {
-				margin-bottom: 1rem;
-				font-style: italic;
-			}
-			.github-link-container {
-				margin-top: 2rem;
-				text-align: center;
-			}
-			.github-link {
-				color: #0366d6;
-				text-decoration: none;
-				border: 1px solid #0366d6;
-				border-radius: 4px;
-				padding: 0.5rem 1rem;
-				font-weight: bold;
-				transition: all 0.3s;
-			}
-			.github-link:hover {
-				background-color: #0366d6;
-				color: white;
-				text-decoration: none;
-			}
-		`;
-		containerEl.appendChild(style);
+
+		githubLogo.src = 'https://assets.stickpng.com/images/5847f98fcef1014c0b5e48c0.png';
+		githubLogo.alt = 'GitHub';
+		githubLogo.style.width = '24px';
+		githubLogo.style.height = '24px';
+		githubLogo.style.verticalAlign = 'middle';
+		githubText.style.display = 'inline-block';
+		githubText.style.verticalAlign = 'middle';
 	}
 }

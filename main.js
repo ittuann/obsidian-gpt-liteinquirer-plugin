@@ -30,9 +30,12 @@ module.exports = __toCommonJS(main_exports);
 var import_obsidian = require("obsidian");
 var DEFAULT_SETTINGS = {
   apiKey: "",
-  maxTokens: 16,
-  temperature: 1,
   chatGPTModel: "gpt-3.5-turbo",
+  apiUrl: "https://api.openai.com",
+  apiUrlPath: "/v1/chat/completions",
+  temperature: 1,
+  maxTokens: 16,
+  defaultPrompt: "",
   insertionMode: "end",
   showSidebarIcon: true
 };
@@ -53,7 +56,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
       name: "Open Lightweight Window",
       callback: () => {
         try {
-          new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.chatGPTModel, this.settings.insertionMode).open();
+          new LightweightChatGPTWindow(this.app, this).open();
         } catch (error) {
           console.error("Error opening Lightweight ChatGPT Plugin Window:", error);
         }
@@ -75,7 +78,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
     try {
       this.ribbonIconEl = this.addRibbonIcon("feather", "GPT-LiteInquirer", (evt) => {
         try {
-          new LightweightChatGPTWindow(this.app, this.settings.apiKey, this.settings.temperature, this.settings.maxTokens, this.settings.chatGPTModel, this.settings.insertionMode).open();
+          new LightweightChatGPTWindow(this.app, this).open();
         } catch (error) {
           console.error("Error opening Lightweight ChatGPT Plugin Window:", error);
         }
@@ -103,13 +106,9 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
   }
 };
 var LightweightChatGPTWindow = class extends import_obsidian.Modal {
-  constructor(app, apiKey, temperature, maxTokens, chatGPTModel, insertionMode) {
+  constructor(app, plugin) {
     super(app);
-    this.apiKey = apiKey;
-    this.temperature = temperature;
-    this.maxTokens = maxTokens;
-    this.chatGPTModel = chatGPTModel;
-    this.insertionMode = insertionMode;
+    this.plugin = plugin;
   }
   onOpen() {
     const { contentEl } = this;
@@ -120,9 +119,21 @@ var LightweightChatGPTWindow = class extends import_obsidian.Modal {
     this.inputTextArea.classList.add("gpt-input-textarea");
     this.inputTextArea.rows = 4;
     this.inputTextArea.placeholder = "Enter your text here ...";
-    this.inputTextArea.value = selectedText ? `${selectedText}
-====
-` : "";
+    if (!this.plugin.settings.defaultPrompt && selectedText) {
+      this.inputTextArea.value = `${selectedText}
+----
+`;
+    } else if (this.plugin.settings.defaultPrompt && !selectedText) {
+      this.inputTextArea.value = `${this.plugin.settings.defaultPrompt}
+`;
+    } else if (this.plugin.settings.defaultPrompt && selectedText) {
+      this.inputTextArea.value = `${selectedText}
+----
+${this.plugin.settings.defaultPrompt}
+`;
+    } else {
+      this.inputTextArea.value = "";
+    }
     this.inputTextArea.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey && !event.ctrlKey) {
         event.preventDefault();
@@ -144,7 +155,7 @@ var LightweightChatGPTWindow = class extends import_obsidian.Modal {
     this.maxTokensInput.classList.add("max-tokens-input");
     this.maxTokensInput.min = "1";
     this.maxTokensInput.max = "2048";
-    this.maxTokensInput.value = this.maxTokens.toString();
+    this.maxTokensInput.value = this.plugin.settings.maxTokens.toString();
     this.maxTokensInput.addEventListener("input", () => {
       if (parseInt(this.maxTokensInput.value) > parseInt(this.maxTokensInput.max)) {
         this.maxTokensInput.value = this.maxTokensInput.max;
@@ -182,8 +193,8 @@ var LightweightChatGPTWindow = class extends import_obsidian.Modal {
     addToPostButton.style.display = "none";
     sendButton.addEventListener("click", async () => {
       if (!parseInt(this.maxTokensInput.value)) {
-        new import_obsidian.Notice(`Use the default value of ${this.maxTokens.toString()} for max Tokens`);
-        this.maxTokensInput.value = this.maxTokens.toString();
+        new import_obsidian.Notice(`Use the default value of ${this.plugin.settings.maxTokens.toString()} for max Tokens`);
+        this.maxTokensInput.value = this.plugin.settings.maxTokens.toString();
       }
       if (!this.inputTextArea.value) {
         new import_obsidian.Notice("Please Enter text");
@@ -208,31 +219,29 @@ var LightweightChatGPTWindow = class extends import_obsidian.Modal {
       this.copyToClipboard(this.responseAPIText);
     });
     addToPostButton.addEventListener("click", () => {
-      this.appendToCurrentNote(this.inputTextArea.value, this.responseAPIText, this.insertionMode);
+      this.appendToCurrentNote(this.inputTextArea.value, this.responseAPIText, this.plugin.settings.insertionMode);
     });
   }
   async sendRequestToChatGPT() {
-    if (!this.apiKey) {
+    if (!this.plugin.settings.apiKey) {
       new import_obsidian.Notice("Please enter your API key in the plugin settings.");
       return;
     }
     this.outputContainer.empty();
     new import_obsidian.Notice("Sending...");
-    const apiUrl = "https://api.openai.com";
-    const apiUrlPatch = "/v1/chat/completions";
     const maxTokens = parseInt(this.maxTokensInput.value);
     try {
       const response = await (0, import_obsidian.request)({
-        url: apiUrl + apiUrlPatch,
+        url: this.plugin.settings.apiUrl + this.plugin.settings.apiUrlPath,
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${this.apiKey}`
+          "Authorization": `Bearer ${this.plugin.settings.apiKey}`
         },
         body: JSON.stringify({
-          model: this.chatGPTModel,
+          model: this.plugin.settings.chatGPTModel,
           max_tokens: maxTokens,
-          temperature: this.temperature,
+          temperature: this.plugin.settings.temperature,
           messages: [
             { role: "user", content: this.inputTextArea.value }
           ]
@@ -319,8 +328,31 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Settings Lightweight ChatGPT Window" });
-    new import_obsidian.Setting(containerEl).setName("OpenAI API Key").setDesc("Enter your OpenAI API key").addText((text) => text.setPlaceholder("Enter your API key").setValue(this.plugin.settings.apiKey).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("API Key*").setDesc("Enter your OpenAI API key").addText((text) => text.setPlaceholder("Enter your API key").setValue(this.plugin.settings.apiKey).onChange(async (value) => {
       this.plugin.settings.apiKey = value;
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian.Setting(containerEl).setName("OpenAI Model").setDesc("Select the OpenAI model to use").addDropdown((dropDown) => dropDown.addOption("gpt-3.5-turbo", "gpt-3.5-turbo").setValue(this.plugin.settings.chatGPTModel).onChange(async (value) => {
+      this.plugin.settings.chatGPTModel = value;
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian.Setting(containerEl).setName("API URL*").setDesc("Modify here if you want to use a self-built server, otherwise keep the default without any changes.").addText((text) => text.setPlaceholder("https://api.openai.com").setValue(this.plugin.settings.apiUrl).onChange(async (value) => {
+      this.plugin.settings.apiUrl = value;
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian.Setting(containerEl).setName("API URL Path*").setDesc("Modify here if you want to use a self-built server, otherwise keep the default without any changes.").addText((text) => text.setPlaceholder("/v1/chat/completions").setValue(this.plugin.settings.apiUrlPath).onChange(async (value) => {
+      this.plugin.settings.apiUrlPath = value;
+      await this.plugin.saveSettings();
+    }));
+    containerEl.createEl("h6", { text: "ChatGPT Model setting" });
+    new import_obsidian.Setting(containerEl).setName("Temperature").setDesc("Enter the temperature value between 0 and 2 (inclusive) for the API response").addText((text) => text.setPlaceholder("Enter temperature").setValue(this.plugin.settings.temperature.toString()).onChange(async (value) => {
+      let parsedValue = parseFloat(value);
+      if (parsedValue < 0) {
+        parsedValue = 0;
+      } else if (parsedValue > 2) {
+        parsedValue = 2;
+      }
+      this.plugin.settings.temperature = parsedValue;
       await this.plugin.saveSettings();
     }));
     new import_obsidian.Setting(containerEl).setName("Default Max Tokens").setDesc("Enter the maximum number of tokens for the API response (integer, min: 1, max: 2048)").addText((text) => text.setPlaceholder("Enter max tokens").setValue(this.plugin.settings.maxTokens.toString()).onChange(async (value) => {
@@ -333,20 +365,13 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
       this.plugin.settings.maxTokens = parsedValue;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("Temperature").setDesc("Enter the temperature value between 0 and 2 (inclusive) for the API response").addText((text) => text.setPlaceholder("Enter temperature").setValue(this.plugin.settings.temperature.toString()).onChange(async (value) => {
-      let parsedValue = parseFloat(value);
-      if (parsedValue < 0) {
-        parsedValue = 0;
-      } else if (parsedValue > 2) {
-        parsedValue = 2;
-      }
-      this.plugin.settings.temperature = parsedValue;
+    new import_obsidian.Setting(containerEl).setName("Default Prompt").setDesc(
+      "The Default Prompt filled in here will be automatically inserted into the requested Prompt."
+    ).addTextArea((text) => text.setPlaceholder("Enter Default Prompt").setValue(this.plugin.settings.defaultPrompt).onChange(async (value) => {
+      this.plugin.settings.defaultPrompt = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("OpenAI Model").setDesc("Select the OpenAI model to use").addDropdown((dropDown) => dropDown.addOption("gpt-3.5-turbo", "gpt-3.5-turbo").setValue(this.plugin.settings.chatGPTModel).onChange(async (value) => {
-      this.plugin.settings.chatGPTModel = value;
-      await this.plugin.saveSettings();
-    }));
+    containerEl.createEl("h6", { text: "Additional setting" });
     new import_obsidian.Setting(containerEl).setName("Insertion Mode").setDesc("Choose how to insert text").addDropdown((dropdown) => dropdown.addOption("end", "Insert at end of document").addOption("current", "Insert at current position").setValue(this.plugin.settings.insertionMode).onChange(async (value) => {
       this.plugin.settings.insertionMode = value;
       await this.plugin.saveSettings();
@@ -361,46 +386,30 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
       }
     }));
     const politeMessage = containerEl.createEl("p", {
-      cls: "polite-message"
+      cls: "settings-polite-message"
     });
     politeMessage.textContent = "If you enjoy this plugin or would like to show your support, please consider giving it a free star on GitHub~ Your appreciation means a lot to me!";
     const githubLink = containerEl.createEl("div", {
-      cls: "github-link-container"
+      cls: "settings-github-link-container"
     });
     const githubAnchor = githubLink.createEl("a", {
-      cls: "github-link"
+      cls: "settings-github-link"
+    });
+    const githubLogo = githubAnchor.createEl("img", {
+      cls: "settings-github-logo"
     });
     githubAnchor.href = "https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin";
     githubAnchor.target = "_blank";
     githubAnchor.rel = "noopener";
-    githubAnchor.createEl("span", {
+    const githubText = githubAnchor.createEl("span", {
       text: "View on GitHub"
     });
-    const style = document.createElement("style");
-    style.innerHTML = `
-			.polite-message {
-				margin-bottom: 1rem;
-				font-style: italic;
-			}
-			.github-link-container {
-				margin-top: 2rem;
-				text-align: center;
-			}
-			.github-link {
-				color: #0366d6;
-				text-decoration: none;
-				border: 1px solid #0366d6;
-				border-radius: 4px;
-				padding: 0.5rem 1rem;
-				font-weight: bold;
-				transition: all 0.3s;
-			}
-			.github-link:hover {
-				background-color: #0366d6;
-				color: white;
-				text-decoration: none;
-			}
-		`;
-    containerEl.appendChild(style);
+    githubLogo.src = "https://assets.stickpng.com/images/5847f98fcef1014c0b5e48c0.png";
+    githubLogo.alt = "GitHub";
+    githubLogo.style.width = "24px";
+    githubLogo.style.height = "24px";
+    githubLogo.style.verticalAlign = "middle";
+    githubText.style.display = "inline-block";
+    githubText.style.verticalAlign = "middle";
   }
 };

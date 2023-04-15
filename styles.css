@@ -22,7 +22,7 @@
 }
 
 .max-tokens-input {
-    width: 40%;
+    width: 30%;
     height: calc(1.5em + 1.25em);
     text-align: right;
 }
@@ -37,4 +37,35 @@
 .buttons-container {
     display: flex;
     margin-top: 1rem;
+}
+
+/* Settings */
+.settings-default-prompt-container {
+	width: 30%;
+}
+
+.settings-polite-message {
+	margin-bottom: 1rem;
+	font-style: italic;
+}
+
+.settings-github-link-container {
+	margin-top: 2rem;
+	text-align: center;
+}
+
+.settings-github-link {
+	color: #0366d6;
+	text-decoration: none;
+	border: 1px solid #0366d6;
+	border-radius: 4px;
+	padding: 0.5rem 1rem;
+	font-weight: bold;
+	transition: all 0.3s;
+}
+
+.settings-github-link:hover {
+	background-color: #0366d6;
+	color: white;
+	text-decoration: none;
 }
