@@ -108,6 +108,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
 var LightweightChatGPTWindow = class extends import_obsidian.Modal {
   constructor(app, plugin) {
     super(app);
+    this.isSendingRequest = false;
     this.plugin = plugin;
   }
   onOpen() {
@@ -173,8 +174,8 @@ ${this.plugin.settings.defaultPrompt}
       el.style.backgroundColor = "green";
       el.style.color = "white";
     });
-    const responseDivider = contentEl.createEl("hr");
-    responseDivider.style.display = "none";
+    const responseDividerLine = contentEl.createEl("hr");
+    responseDividerLine.style.display = "none";
     this.outputContainer = contentEl.createEl("div");
     this.outputContainer.classList.add("output-container");
     const buttonsContainer = contentEl.createEl("div");
@@ -196,23 +197,39 @@ ${this.plugin.settings.defaultPrompt}
         new import_obsidian.Notice(`Use the default value of ${this.plugin.settings.maxTokens.toString()} for max Tokens`);
         this.maxTokensInput.value = this.plugin.settings.maxTokens.toString();
       }
+      if (!this.plugin.settings.apiKey) {
+        new import_obsidian.Notice("Please enter your API key in the plugin settings.");
+        return;
+      }
       if (!this.inputTextArea.value) {
         new import_obsidian.Notice("Please Enter text");
         return;
       }
+      if (this.isSendingRequest) {
+        return;
+      }
+      this.isSendingRequest = true;
       sendButton.textContent = "Sending ...";
       sendButton.textContent = "Waiting for API full response ...";
-      copyToClipboardButton.style.display = "none";
-      addToPostButton.style.display = "none";
-      responseDivider.style.display = "none";
       try {
+        new import_obsidian.Notice("Sending...");
         this.responseAPIText = await this.sendRequestToChatGPT();
+        if (!this.responseAPIText) {
+          this.outputContainer.empty();
+          responseDividerLine.style.display = "none";
+          copyToClipboardButton.style.display = "none";
+          addToPostButton.style.display = "none";
+        }
+        this.outputContainer.createEl("p", { text: this.responseAPIText });
         sendButton.textContent = "Send";
+        responseDividerLine.style.display = "block";
         copyToClipboardButton.style.display = "block";
         addToPostButton.style.display = "block";
-        responseDivider.style.display = "block";
       } catch (error) {
         sendButton.textContent = "Send";
+        console.error("Error during API request:", error);
+      } finally {
+        this.isSendingRequest = false;
       }
     });
     copyToClipboardButton.addEventListener("click", () => {
@@ -223,12 +240,6 @@ ${this.plugin.settings.defaultPrompt}
     });
   }
   async sendRequestToChatGPT() {
-    if (!this.plugin.settings.apiKey) {
-      new import_obsidian.Notice("Please enter your API key in the plugin settings.");
-      return;
-    }
-    this.outputContainer.empty();
-    new import_obsidian.Notice("Sending...");
     const maxTokens = parseInt(this.maxTokensInput.value);
     try {
       const response = await (0, import_obsidian.request)({
@@ -242,6 +253,7 @@ ${this.plugin.settings.defaultPrompt}
           model: this.plugin.settings.chatGPTModel,
           max_tokens: maxTokens,
           temperature: this.plugin.settings.temperature,
+          stream: false,
           messages: [
             { role: "user", content: this.inputTextArea.value }
           ]
@@ -250,8 +262,6 @@ ${this.plugin.settings.defaultPrompt}
       const result = JSON.parse(response);
       if (result.choices && result.choices.length > 0) {
         const gptResponse = result.choices[0].message.content;
-        this.outputContainer.empty();
-        this.outputContainer.createEl("p", { text: gptResponse });
         return gptResponse;
       } else if (result.error) {
         throw new Error(JSON.stringify(result.error));

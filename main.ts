@@ -137,6 +137,7 @@ class LightweightChatGPTWindow extends Modal {
 	private maxTokensInput: HTMLInputElement;
 
 	private responseAPIText: string;
+	private isSendingRequest = false;
 
 	constructor(app: App, plugin: LightweightChatGPTPlugin) {
 		super(app);
@@ -215,8 +216,8 @@ class LightweightChatGPTWindow extends Modal {
 			el.style.color = 'white';
 		});
 
-		const responseDivider = contentEl.createEl('hr');
-		responseDivider.style.display = 'none';
+		const responseDividerLine = contentEl.createEl('hr');
+		responseDividerLine.style.display = 'none';
 
 		// Output Container
 		this.outputContainer = contentEl.createEl('div');
@@ -245,26 +246,46 @@ class LightweightChatGPTWindow extends Modal {
 				this.maxTokensInput.value = this.plugin.settings.maxTokens.toString();
 			}
 
+			if (!this.plugin.settings.apiKey) {
+				new Notice('Please enter your API key in the plugin settings.');
+				return;
+			}
+
 			if (!this.inputTextArea.value) {
 				new Notice('Please Enter text');
 				return;
 			}
 
+			if (this.isSendingRequest) {
+				// new Notice('Please wait until receive API response');
+				return;
+			}
+
+			this.isSendingRequest = true;
 			sendButton.textContent = 'Sending ...';
 			sendButton.textContent = 'Waiting for API full response ...';
-			copyToClipboardButton.style.display = 'none';
-			addToPostButton.style.display = 'none';
-			responseDivider.style.display = 'none';
 			
 			try {
+				new Notice('Sending...');
 				this.responseAPIText = await this.sendRequestToChatGPT();
+
+				if (!this.responseAPIText) {
+					this.outputContainer.empty();
+					responseDividerLine.style.display = 'none';
+					copyToClipboardButton.style.display = 'none';
+					addToPostButton.style.display = 'none';
+				}
+				this.outputContainer.createEl('p', { text: this.responseAPIText });
+
 				sendButton.textContent = 'Send';
+				responseDividerLine.style.display = 'block';
 				copyToClipboardButton.style.display = 'block';
 				addToPostButton.style.display = 'block';
-				responseDivider.style.display = 'block';
 			} catch (error) {
 				sendButton.textContent = 'Send';
-				// new Notice('Error during API request: ' + error.message);
+				console.error('Error during API request:', error);
+			} finally {
+				this.isSendingRequest = false;
 			}
 		});
 
@@ -278,15 +299,8 @@ class LightweightChatGPTWindow extends Modal {
 	}
 
 	async sendRequestToChatGPT() {
-		if (!this.plugin.settings.apiKey) {
-			new Notice('Please enter your API key in the plugin settings.');
-			return;
-		}
-		this.outputContainer.empty();
-
-		new Notice('Sending...');
-
 		const maxTokens = parseInt(this.maxTokensInput.value);
+		
 		try {
 			const response = await request({
 				url: this.plugin.settings.apiUrl + this.plugin.settings.apiUrlPath,
@@ -299,6 +313,7 @@ class LightweightChatGPTWindow extends Modal {
 					model: this.plugin.settings.chatGPTModel,
 					max_tokens: maxTokens,
 					temperature: this.plugin.settings.temperature,
+					stream: false,
 					messages: [
 						{ role: 'user', content: this.inputTextArea.value }
 					]
@@ -308,10 +323,6 @@ class LightweightChatGPTWindow extends Modal {
 			const result = JSON.parse(response);
 			if (result.choices && result.choices.length > 0) {
 				const gptResponse = result.choices[0].message.content;
-		
-				// Display the response in the output container
-				this.outputContainer.empty();
-				this.outputContainer.createEl('p', { text: gptResponse });
 				return gptResponse;
 			} else if (result.error) {
 				throw new Error(JSON.stringify(result.error));
