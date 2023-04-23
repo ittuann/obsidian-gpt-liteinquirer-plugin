@@ -17,7 +17,7 @@
 
 <div align="right">
 Language:
-<a title="English" href="https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin">:gb: English</a> · 
+<a title="English" href="https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin#readme">:gb: English</a> · 
 :cn: 简体中文</a>
 </div>
 
@@ -27,7 +27,7 @@ Language:
 
 如果您喜欢这个插件或想要支持它，请考虑在 GitHub 上免费给它点个星~
 
-**在 Obsidian 中自动安装和查看此插件**：[点击这里](https://obsidian.md/plugins?id=gpt-liteinquirer)\*\*
+**在 Obsidian 中自动安装和查看此插件：[点击这里](https://obsidian.md/plugins?id=gpt-liteinquirer)**
 
 **手动安装：[点击这里](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin/releases/latest)**。您只需要手动下载 `main.js`、`styles.css` 和 `manifest.json`，然后将它们放在 `.obsidian\plugins\gpt-liteinquirer` 文件夹中即可。
 

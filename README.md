@@ -52,7 +52,7 @@ If you enjoy this plugin or would like to show your support, please consider giv
 
 ## 🧩 Configuration
 
-You need to **first** set your own OpenAI API key in the Plugin Settings , so that the plugin can work properly.
+You **MUST** need to set your own OpenAI API key in the Plugin Settings first, so that the plugin can work properly.
 
 1. Generate an OpenAI API key on the official website. [Click here](https://beta.openai.com/account/api-keys)
 2. In Obsidian, go to `Settings`, click `Community Plugins` in the left menu , and enable `GPT-LiteInquirer` in the Installed Plugins.

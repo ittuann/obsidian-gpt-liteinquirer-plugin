@@ -259,12 +259,12 @@ ${this.plugin.settings.defaultPrompt}
           ]
         })
       });
-      const result = JSON.parse(response);
-      if (result.choices && result.choices.length > 0) {
-        const gptResponse = result.choices[0].message.content;
+      const currentResult = JSON.parse(response);
+      if (currentResult.choices && currentResult.choices.length > 0) {
+        const gptResponse = currentResult.choices[0].message.content;
         return gptResponse;
-      } else if (result.error) {
-        throw new Error(JSON.stringify(result.error));
+      } else if (currentResult.error) {
+        throw new Error(JSON.stringify(currentResult.error));
       } else {
         throw new Error("Unexpected API response format");
       }
@@ -338,11 +338,21 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
     const { containerEl } = this;
     containerEl.empty();
     containerEl.createEl("h2", { text: "Settings Lightweight ChatGPT Window" });
-    new import_obsidian.Setting(containerEl).setName("API Key*").setDesc("Enter your OpenAI API key").addText((text) => text.setPlaceholder("Enter your API key").setValue(this.plugin.settings.apiKey).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("API Key*").setDesc(
+      createFragment((frag) => {
+        frag.appendText("Enter your OpenAI API key. ");
+        frag.appendText("If you don't have it, you can ");
+        frag.createEl("a", {
+          href: "https://platform.openai.com/account/api-keys",
+          text: "Click Here"
+        });
+        frag.appendText(" to apply.");
+      })
+    ).addText((text) => text.setPlaceholder("Enter your API key").setValue(this.plugin.settings.apiKey).onChange(async (value) => {
       this.plugin.settings.apiKey = value;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("OpenAI Model").setDesc("Select the OpenAI model to use").addDropdown((dropDown) => dropDown.addOption("gpt-3.5-turbo", "gpt-3.5-turbo").setValue(this.plugin.settings.chatGPTModel).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("OpenAI Model").setDesc("Select the OpenAI model to use.").addDropdown((dropDown) => dropDown.addOption("gpt-3.5-turbo", "gpt-3.5-turbo").setValue(this.plugin.settings.chatGPTModel).onChange(async (value) => {
       this.plugin.settings.chatGPTModel = value;
       await this.plugin.saveSettings();
     }));
@@ -365,18 +375,22 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
       this.plugin.settings.temperature = parsedValue;
       await this.plugin.saveSettings();
     }));
-    new import_obsidian.Setting(containerEl).setName("Default Max Tokens").setDesc("Enter the maximum number of tokens for the API response (integer, min: 1, max: 2048)").addText((text) => text.setPlaceholder("Enter max tokens").setValue(this.plugin.settings.maxTokens.toString()).onChange(async (value) => {
+    new import_obsidian.Setting(containerEl).setName("Default Max Tokens").setDesc(this.plugin.settings.chatGPTModel === "gpt-4" ? "Enter the maximum number of tokens for the API response (integer, min: 1, max: 4096)" : "Enter the maximum number of tokens for the API response (integer, min: 1, max: 2048)").addText((text) => text.setPlaceholder("Enter max tokens").setValue(this.plugin.settings.maxTokens.toString()).onChange(async (value) => {
       let parsedValue = parseInt(value);
+      let parsedMaxValue = 2048;
+      if (this.plugin.settings.chatGPTModel === "gpt-4") {
+        parsedMaxValue = 4096;
+      }
       if (parsedValue < 1) {
         parsedValue = 1;
-      } else if (parsedValue > 2048) {
-        parsedValue = 2048;
+      } else if (parsedValue > parsedMaxValue) {
+        parsedValue = parsedMaxValue;
       }
       this.plugin.settings.maxTokens = parsedValue;
       await this.plugin.saveSettings();
     }));
     new import_obsidian.Setting(containerEl).setName("Default Prompt").setDesc(
-      "The Default Prompt filled in here will be automatically inserted into the requested Prompt."
+      "Default Prompt will be automatically inserted into the requested Prompt. (Not necessary)"
     ).addTextArea((text) => text.setPlaceholder("Enter Default Prompt").setValue(this.plugin.settings.defaultPrompt).onChange(async (value) => {
       this.plugin.settings.defaultPrompt = value;
       await this.plugin.saveSettings();
