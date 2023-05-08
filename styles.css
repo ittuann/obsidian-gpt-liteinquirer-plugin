@@ -33,8 +33,14 @@
     user-select: text;
 }
 
+.display-tokens-usage-container {
+	font-style: italic;
+	text-align: right;
+    font-size: 12px;
+}
+
 /* Buttons */
-.buttons-container {
+.buttons-bottom-container {
     display: flex;
     margin-top: 1rem;
 }
@@ -68,4 +74,11 @@
 	background-color: #0366d6;
 	color: white;
 	text-decoration: none;
+}
+
+.settings-github-logo {
+	width: 24px;
+	height: 24px;
+	vertical-align: middle;
+	display: inline-block;
 }

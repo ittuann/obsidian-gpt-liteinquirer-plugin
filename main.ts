@@ -20,6 +20,7 @@ interface LightweightChatGPTPluginSettings {
 	maxTokens: number;
 	defaultPrompt: string;
 	insertionMode: string;
+	displayTokensUsage: boolean;
 	showSidebarIcon: boolean;
 }
 
@@ -32,6 +33,7 @@ const DEFAULT_SETTINGS: LightweightChatGPTPluginSettings = {
 	maxTokens: 16,
 	defaultPrompt: '',
 	insertionMode: 'end',
+	displayTokensUsage: true,
 	showSidebarIcon: true
 }
 
@@ -134,6 +136,7 @@ class LightweightChatGPTWindow extends Modal {
 
 	private inputTextArea: HTMLTextAreaElement;
 	private outputContainer: HTMLElement;
+	private displayTokensUsageContainer: HTMLElement;
 	private maxTokensInput: HTMLInputElement;
 
 	private responseAPIText: string;
@@ -223,19 +226,19 @@ class LightweightChatGPTWindow extends Modal {
 		this.outputContainer = contentEl.createEl('div');
 		this.outputContainer.classList.add('output-container');
 
+		// Tokens Container
+		this.displayTokensUsageContainer = contentEl.createEl('div');
+		this.displayTokensUsageContainer.classList.add('display-tokens-usage-container');
+
 		// Add Other Button
-		const buttonsContainer = contentEl.createEl('div');
-		buttonsContainer.style.display = 'flex';
-		buttonsContainer.style.marginTop = '1rem';
-		const copyToClipboardButton = buttonsContainer.createEl('button', { 
-			text: 'Copy to clipboard'
-		}, (el: HTMLButtonElement) => {
-			el.style.backgroundColor = 'green';
-			el.style.color = 'white';
-		});
+		const buttonsBottomContainer = contentEl.createEl('div');
+		buttonsBottomContainer.classList.add('buttons-bottom-container');
+		const copyToClipboardButton = buttonsBottomContainer.createEl('button', { text: 'Copy to clipboard' });
 		copyToClipboardButton.style.marginRight = '1rem';
+		copyToClipboardButton.style.backgroundColor = 'green';
+		copyToClipboardButton.style.color = 'white';
 		copyToClipboardButton.style.display = 'none';
-		const addToPostButton = buttonsContainer.createEl('button', { text: 'Add to current document' });
+		const addToPostButton = buttonsBottomContainer.createEl('button', { text: 'Add to current document' });
 		addToPostButton.style.marginRight = '1rem';
 		addToPostButton.style.display = 'none';
 		
@@ -252,7 +255,7 @@ class LightweightChatGPTWindow extends Modal {
 			}
 
 			if (!this.inputTextArea.value) {
-				new Notice('Please Enter text');
+				new Notice('Please enter text');
 				return;
 			}
 
@@ -269,12 +272,10 @@ class LightweightChatGPTWindow extends Modal {
 				new Notice('Sending...');
 				this.responseAPIText = await this.sendRequestToChatGPT();
 
-				if (!this.responseAPIText) {
+				if (this.responseAPIText && this.responseAPIText.trim() !== '') {
 					this.outputContainer.empty();
-					responseDividerLine.style.display = 'none';
-					copyToClipboardButton.style.display = 'none';
-					addToPostButton.style.display = 'none';
 				}
+
 				this.outputContainer.createEl('p', { text: this.responseAPIText });
 
 				sendButton.textContent = 'Send';
@@ -295,6 +296,16 @@ class LightweightChatGPTWindow extends Modal {
 
 		addToPostButton.addEventListener('click', () => {
 			this.appendToCurrentNote(this.inputTextArea.value, this.responseAPIText, this.plugin.settings.insertionMode);
+		});
+	}
+
+	async displayTokensUsage(promptTokens: number, completionTokens: number, totalTokens: number) {
+		this.displayTokensUsageContainer.empty();
+
+		this.displayTokensUsageContainer.createEl('p', { 
+			text: `Tokens Usage Prompt: ${promptTokens} / 
+			Completion: ${completionTokens} / 
+			Total: ${totalTokens}` 
 		});
 	}
 
@@ -323,6 +334,15 @@ class LightweightChatGPTWindow extends Modal {
 			const currentResult = JSON.parse(response);
 			if (currentResult.choices && currentResult.choices.length > 0) {
 				const gptResponse = currentResult.choices[0].message.content;
+
+				const promptTokens = currentResult.usage.prompt_tokens;
+				const completionTokens = currentResult.usage.completion_tokens;
+				const totalTokens = currentResult.usage.total_tokens;
+
+				if (this.plugin.settings.displayTokensUsage) {
+					this.displayTokensUsage(promptTokens, completionTokens, totalTokens);
+				}
+
 				return gptResponse;
 			} else if (currentResult.error) {
 				throw new Error(JSON.stringify(currentResult.error));
@@ -353,7 +373,7 @@ class LightweightChatGPTWindow extends Modal {
 			new Notice('No text to add');
 			return;
 		}
-
+		
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const activeLeaf = activeView?.leaf;
 		if (activeView && activeLeaf && activeLeaf.view instanceof MarkdownView) {
@@ -475,6 +495,9 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.temperature.toString())
 				.onChange(async (value) => {
 					let parsedValue = parseFloat(value);
+					if (isNaN(parsedValue)) {
+						parsedValue = 1;
+					}
 					if (parsedValue < 0) {
 						parsedValue = 0;
 					} else if (parsedValue > 2) {
@@ -498,10 +521,10 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 					if (this.plugin.settings.chatGPTModel === "gpt-4") {
 						parsedMaxValue = 4096;
 					}
-					if (parsedValue < 1) {
-						parsedValue = 1;
-					} else if (parsedValue > parsedMaxValue) {
+					if (isNaN(parsedValue) || parsedValue > parsedMaxValue) {
 						parsedValue = parsedMaxValue;
+					} else if (parsedValue < 1) {
+						parsedValue = 1;
 					}
 					this.plugin.settings.maxTokens = parsedValue;
 					await this.plugin.saveSettings();
@@ -535,6 +558,16 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 				}));
 
 		new Setting(containerEl)
+			.setName('Display Tokens Usage')
+			.setDesc('Toggle to display or hide the number of Tokens used per request.')
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.displayTokensUsage)
+				.onChange(async (value) => {
+					this.plugin.settings.displayTokensUsage = value;
+					await this.plugin.saveSettings();
+				}));
+
+		new Setting(containerEl)
 			.setName('Show Sidebar Icon')
 			.setDesc('Toggle to show or hide the sidebar icon')
 			.addToggle(toggle => toggle
@@ -560,22 +593,19 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 		const githubAnchor = githubLink.createEl('a', {
 			cls: 'settings-github-link',
 		});
-		const githubLogo = githubAnchor.createEl('img', {
-			cls: 'settings-github-logo',
-		});
 		githubAnchor.href = 'https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin';
 		githubAnchor.target = '_blank';
 		githubAnchor.rel = 'noopener';
+		
+		const githubLogo = githubAnchor.createEl('img', {
+			cls: 'settings-github-logo',
+		});
+		githubLogo.src = 'https://assets.stickpng.com/images/5847f98fcef1014c0b5e48c0.png';
+		githubLogo.alt = 'GitHub';
 
 		const githubText = githubAnchor.createEl('span', {
 			text: 'View on GitHub',
 		});
-
-		githubLogo.src = 'https://assets.stickpng.com/images/5847f98fcef1014c0b5e48c0.png';
-		githubLogo.alt = 'GitHub';
-		githubLogo.style.width = '24px';
-		githubLogo.style.height = '24px';
-		githubLogo.style.verticalAlign = 'middle';
 		githubText.style.display = 'inline-block';
 		githubText.style.verticalAlign = 'middle';
 	}

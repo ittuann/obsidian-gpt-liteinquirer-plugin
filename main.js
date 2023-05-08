@@ -37,6 +37,7 @@ var DEFAULT_SETTINGS = {
   maxTokens: 16,
   defaultPrompt: "",
   insertionMode: "end",
+  displayTokensUsage: true,
   showSidebarIcon: true
 };
 var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
@@ -178,18 +179,16 @@ ${this.plugin.settings.defaultPrompt}
     responseDividerLine.style.display = "none";
     this.outputContainer = contentEl.createEl("div");
     this.outputContainer.classList.add("output-container");
-    const buttonsContainer = contentEl.createEl("div");
-    buttonsContainer.style.display = "flex";
-    buttonsContainer.style.marginTop = "1rem";
-    const copyToClipboardButton = buttonsContainer.createEl("button", {
-      text: "Copy to clipboard"
-    }, (el) => {
-      el.style.backgroundColor = "green";
-      el.style.color = "white";
-    });
+    this.displayTokensUsageContainer = contentEl.createEl("div");
+    this.displayTokensUsageContainer.classList.add("display-tokens-usage-container");
+    const buttonsBottomContainer = contentEl.createEl("div");
+    buttonsBottomContainer.classList.add("buttons-bottom-container");
+    const copyToClipboardButton = buttonsBottomContainer.createEl("button", { text: "Copy to clipboard" });
     copyToClipboardButton.style.marginRight = "1rem";
+    copyToClipboardButton.style.backgroundColor = "green";
+    copyToClipboardButton.style.color = "white";
     copyToClipboardButton.style.display = "none";
-    const addToPostButton = buttonsContainer.createEl("button", { text: "Add to current document" });
+    const addToPostButton = buttonsBottomContainer.createEl("button", { text: "Add to current document" });
     addToPostButton.style.marginRight = "1rem";
     addToPostButton.style.display = "none";
     sendButton.addEventListener("click", async () => {
@@ -202,7 +201,7 @@ ${this.plugin.settings.defaultPrompt}
         return;
       }
       if (!this.inputTextArea.value) {
-        new import_obsidian.Notice("Please Enter text");
+        new import_obsidian.Notice("Please enter text");
         return;
       }
       if (this.isSendingRequest) {
@@ -214,11 +213,8 @@ ${this.plugin.settings.defaultPrompt}
       try {
         new import_obsidian.Notice("Sending...");
         this.responseAPIText = await this.sendRequestToChatGPT();
-        if (!this.responseAPIText) {
+        if (this.responseAPIText && this.responseAPIText.trim() !== "") {
           this.outputContainer.empty();
-          responseDividerLine.style.display = "none";
-          copyToClipboardButton.style.display = "none";
-          addToPostButton.style.display = "none";
         }
         this.outputContainer.createEl("p", { text: this.responseAPIText });
         sendButton.textContent = "Send";
@@ -237,6 +233,14 @@ ${this.plugin.settings.defaultPrompt}
     });
     addToPostButton.addEventListener("click", () => {
       this.appendToCurrentNote(this.inputTextArea.value, this.responseAPIText, this.plugin.settings.insertionMode);
+    });
+  }
+  async displayTokensUsage(promptTokens, completionTokens, totalTokens) {
+    this.displayTokensUsageContainer.empty();
+    this.displayTokensUsageContainer.createEl("p", {
+      text: `Tokens Usage Prompt: ${promptTokens} / 
+			Completion: ${completionTokens} / 
+			Total: ${totalTokens}`
     });
   }
   async sendRequestToChatGPT() {
@@ -262,6 +266,12 @@ ${this.plugin.settings.defaultPrompt}
       const currentResult = JSON.parse(response);
       if (currentResult.choices && currentResult.choices.length > 0) {
         const gptResponse = currentResult.choices[0].message.content;
+        const promptTokens = currentResult.usage.prompt_tokens;
+        const completionTokens = currentResult.usage.completion_tokens;
+        const totalTokens = currentResult.usage.total_tokens;
+        if (this.plugin.settings.displayTokensUsage) {
+          this.displayTokensUsage(promptTokens, completionTokens, totalTokens);
+        }
         return gptResponse;
       } else if (currentResult.error) {
         throw new Error(JSON.stringify(currentResult.error));
@@ -367,6 +377,9 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
     containerEl.createEl("h6", { text: "ChatGPT Model setting" });
     new import_obsidian.Setting(containerEl).setName("Temperature").setDesc("Enter the temperature value between 0 and 2 (inclusive) for the API response").addText((text) => text.setPlaceholder("Enter temperature").setValue(this.plugin.settings.temperature.toString()).onChange(async (value) => {
       let parsedValue = parseFloat(value);
+      if (isNaN(parsedValue)) {
+        parsedValue = 1;
+      }
       if (parsedValue < 0) {
         parsedValue = 0;
       } else if (parsedValue > 2) {
@@ -381,10 +394,10 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
       if (this.plugin.settings.chatGPTModel === "gpt-4") {
         parsedMaxValue = 4096;
       }
-      if (parsedValue < 1) {
-        parsedValue = 1;
-      } else if (parsedValue > parsedMaxValue) {
+      if (isNaN(parsedValue) || parsedValue > parsedMaxValue) {
         parsedValue = parsedMaxValue;
+      } else if (parsedValue < 1) {
+        parsedValue = 1;
       }
       this.plugin.settings.maxTokens = parsedValue;
       await this.plugin.saveSettings();
@@ -398,6 +411,10 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
     containerEl.createEl("h6", { text: "Additional setting" });
     new import_obsidian.Setting(containerEl).setName("Insertion Mode").setDesc("Choose how to insert text").addDropdown((dropdown) => dropdown.addOption("end", "Insert at end of document").addOption("current", "Insert at current position").setValue(this.plugin.settings.insertionMode).onChange(async (value) => {
       this.plugin.settings.insertionMode = value;
+      await this.plugin.saveSettings();
+    }));
+    new import_obsidian.Setting(containerEl).setName("Display Tokens Usage").setDesc("Toggle to display or hide the number of Tokens used per request.").addToggle((toggle) => toggle.setValue(this.plugin.settings.displayTokensUsage).onChange(async (value) => {
+      this.plugin.settings.displayTokensUsage = value;
       await this.plugin.saveSettings();
     }));
     new import_obsidian.Setting(containerEl).setName("Show Sidebar Icon").setDesc("Toggle to show or hide the sidebar icon").addToggle((toggle) => toggle.setValue(this.plugin.settings.showSidebarIcon).onChange(async (value) => {
@@ -419,20 +436,17 @@ var LightweightChatGPTSettingTab = class extends import_obsidian.PluginSettingTa
     const githubAnchor = githubLink.createEl("a", {
       cls: "settings-github-link"
     });
-    const githubLogo = githubAnchor.createEl("img", {
-      cls: "settings-github-logo"
-    });
     githubAnchor.href = "https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin";
     githubAnchor.target = "_blank";
     githubAnchor.rel = "noopener";
-    const githubText = githubAnchor.createEl("span", {
-      text: "View on GitHub"
+    const githubLogo = githubAnchor.createEl("img", {
+      cls: "settings-github-logo"
     });
     githubLogo.src = "https://assets.stickpng.com/images/5847f98fcef1014c0b5e48c0.png";
     githubLogo.alt = "GitHub";
-    githubLogo.style.width = "24px";
-    githubLogo.style.height = "24px";
-    githubLogo.style.verticalAlign = "middle";
+    const githubText = githubAnchor.createEl("span", {
+      text: "View on GitHub"
+    });
     githubText.style.display = "inline-block";
     githubText.style.verticalAlign = "middle";
   }
