@@ -2,7 +2,7 @@
 name: Ask Question
 about: Need help while using this project
 title: "[Ask Question] "
-labels: ""
+labels: "ask question"
 assignees: ""
 ---
 
