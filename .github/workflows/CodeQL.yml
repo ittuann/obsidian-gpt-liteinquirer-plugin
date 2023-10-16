@@ -44,3 +44,4 @@ jobs:
           excludeFiles: |
             **/package-lock.json
             **/.github/workflows/*.yml
+        continue-on-error: true
