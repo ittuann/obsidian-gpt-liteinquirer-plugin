@@ -5,6 +5,7 @@
 [![CI][ci-image]][ci-url]
 [![Code Scanning][code-scanning-image]][code-scanning-url]
 [![TAG][tag-image]][tag-url]
+
 [![Downloads][downloads-image]][downloads-url]
 [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin?ref=badge_shield)
 
@@ -87,6 +88,8 @@ TODO List:
 
 GPT-LiteInquirer Plugin for Obsidian wants to be a nice companion to boost your creativity and productivity. Experience the seamless AI-enhanced writing and content generation capabilities within Obsidian today!
 
-
 ## License
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin?ref=badge_large)
+
+The project is [MIT Licensed](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin/blob/master/LICENSE).
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin?ref=badge_large&issueType=license)
