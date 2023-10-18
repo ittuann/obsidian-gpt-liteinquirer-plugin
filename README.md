@@ -7,7 +7,6 @@
 [![TAG][tag-image]][tag-url]
 
 [![Downloads][downloads-image]][downloads-url]
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin?ref=badge_shield)
 
 [ci-image]: https://img.shields.io/github/actions/workflow/status/ittuann/obsidian-gpt-liteinquirer-plugin/CI.yml?branch=master&label=Build%20Status&logo=github&style=for-the-badge
 [ci-url]: https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin
@@ -30,7 +29,7 @@ With this GPT-LiteInquirer Plugin, you can quickly and senselessly generate idea
 
 The Lightweight ChatGPT Plugin is a fast, easy-to-use, and non-intrusive AI assistant plugin, which senselessly integrates OpenAI's ChatGPT API directly into Obsidian.
 
-If you enjoy this plugin or would like to show your support, please consider giving it a free star on GitHub~
+If you enjoy this plugin or would like to show your support, please consider giving it a free [Star ✨](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin) on GitHub~
 
 **Install and view this plugin automatically within Obsidian: [Click here](https://obsidian.md/plugins?id=gpt-liteinquirer)**
 
@@ -57,7 +56,8 @@ If you enjoy this plugin or would like to show your support, please consider giv
 
 ## 🧩 Configuration
 
-You **MUST** need to set your own OpenAI API key in the Plugin Settings first, so that the plugin can work properly.
+> [!IMPORTANT]
+> You must need to set your own OpenAI API key in the Plugin Settings first, so that the plugin can work properly.
 
 1. Generate an OpenAI API key on the official website. [Click here](https://beta.openai.com/account/api-keys)
 2. In Obsidian, go to `Settings`, click `Community Plugins` in the left menu , and enable `GPT-LiteInquirer` in the Installed Plugins.
@@ -92,4 +92,4 @@ GPT-LiteInquirer Plugin for Obsidian wants to be a nice companion to boost your 
 
 The project is [MIT Licensed](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin/blob/master/LICENSE).
 
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin?ref=badge_large&issueType=license)
+[![FOSSA License Compliance Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin?ref=badge_large&issueType=license)

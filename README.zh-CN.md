@@ -5,6 +5,7 @@
 [![CI][ci-image]][ci-url]
 [![Code Scanning][code-scanning-image]][code-scanning-url]
 [![TAG][tag-image]][tag-url]
+
 [![Downloads][downloads-image]][downloads-url]
 
 [ci-image]: https://img.shields.io/github/actions/workflow/status/ittuann/obsidian-gpt-liteinquirer-plugin/CI.yml?branch=master&label=Build%20Status&logo=github&style=for-the-badge
@@ -55,7 +56,8 @@ Language:
 
 ## 🧩 配置
 
-您需要先在插件设置中设置自己的 OpenAI API 密钥，以便插件可以正常工作。
+> [!IMPORTANT]
+> 您需要先在插件设置中设置自己的 OpenAI API 密钥，以便插件可以正常工作。
 
 1. 在官方网站上生成 OpenAI API 密钥。[点击这里](https://beta.openai.com/account/api-keys)
 2. 在 Obsidian 中，转到`设置`，在左侧菜单中单击`社区插件`，然后启用已经安装好的`GPT-LiteInquirer`插件。
@@ -76,3 +78,10 @@ Language:
 提示：您也可以使用 `CTRL + ENTER` 快捷键直接发送内容。
 
 GPT-LiteInquirer 插件旨在成为提高您创造力和生产力的小工具。今天就在 Obsidian 中体验无缝的 AI 增强写作和内容生成能力吧！
+
+
+## License
+
+The project is [MIT Licensed](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin/blob/master/LICENSE).
+
+[![FOSSA License Compliance Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin.svg?type=large&issueType=license)](https://app.fossa.com/projects/git%2Bgithub.com%2Fittuann%2Fobsidian-gpt-liteinquirer-plugin?ref=badge_large&issueType=license)
