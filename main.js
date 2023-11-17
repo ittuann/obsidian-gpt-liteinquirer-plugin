@@ -40,12 +40,25 @@ var DEFAULT_SETTINGS = {
   displayTokensUsage: true,
   showSidebarIcon: true
 };
+function extractErrorMessage(error) {
+  if (error instanceof Error) {
+    return error.message;
+  } else {
+    return String(error);
+  }
+}
 var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
   async onload() {
     try {
       await this.loadSettings();
     } catch (error) {
-      console.error("Error loading settings:", error);
+      let message;
+      if (error instanceof Error) {
+        message = error.message;
+      } else {
+        message = String(error);
+      }
+      console.error("Error loading settings:", message);
     }
     this.app.workspace.onLayoutReady(() => {
       if (this.settings.showSidebarIcon) {
@@ -59,7 +72,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
         try {
           new LightweightChatGPTWindow(this.app, this).open();
         } catch (error) {
-          console.error("Error opening Lightweight ChatGPT Plugin Window:", error);
+          console.error("Error opening Lightweight ChatGPT Plugin Window:", extractErrorMessage(error));
         }
       }
       // hotkeys: [
@@ -72,7 +85,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
     try {
       this.addSettingTab(new LightweightChatGPTSettingTab(this.app, this));
     } catch (error) {
-      console.error("Error adding settings tab:", error);
+      console.error("Error adding settings tab:", extractErrorMessage(error));
     }
   }
   addSidebarIcon() {
@@ -81,11 +94,11 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
         try {
           new LightweightChatGPTWindow(this.app, this).open();
         } catch (error) {
-          console.error("Error opening Lightweight ChatGPT Plugin Window:", error);
+          console.error("Error opening Lightweight ChatGPT Plugin Window:", extractErrorMessage(error));
         }
       });
     } catch (error) {
-      console.error("Error adding sidebar icon:", error);
+      console.error("Error adding sidebar icon:", extractErrorMessage(error));
     }
   }
   removeSidebarIcon() {
@@ -93,7 +106,7 @@ var LightweightChatGPTPlugin = class extends import_obsidian.Plugin {
       try {
         this.ribbonIconEl.remove();
       } catch (error) {
-        console.error("Error closing sidebar icon:", error);
+        console.error("Error closing sidebar icon:", extractErrorMessage(error));
       }
     }
   }
@@ -150,7 +163,7 @@ ${this.plugin.settings.defaultPrompt}
     maxTokensContainer.className = "max-tokens-container";
     const maxTokensLabelContainer = maxTokensContainer.createEl("div");
     maxTokensLabelContainer.createEl("label", { text: "Max tokens:" });
-    const maxTokensDescription = maxTokensLabelContainer.createEl("p", { text: "Max OpenAI ChatGpt Tokens" });
+    const maxTokensDescription = maxTokensLabelContainer.createEl("p", { text: "Max OpenAI ChatGPT Tokens" });
     maxTokensDescription.classList.add("max-tokens-description");
     this.maxTokensInput = maxTokensContainer.createEl("input", { type: "number" });
     this.maxTokensInput.placeholder = "Enter max Tokens number";
@@ -223,7 +236,7 @@ ${this.plugin.settings.defaultPrompt}
         addToPostButton.style.display = "block";
       } catch (error) {
         sendButton.textContent = "Send";
-        console.error("Error during API request:", error);
+        console.error("Error during API request:", extractErrorMessage(error));
       } finally {
         this.isSendingRequest = false;
       }
@@ -238,8 +251,8 @@ ${this.plugin.settings.defaultPrompt}
   async displayTokensUsage(promptTokens, completionTokens, totalTokens) {
     this.displayTokensUsageContainer.empty();
     this.displayTokensUsageContainer.createEl("p", {
-      text: `Tokens Usage Prompt: ${promptTokens} / 
-			Completion: ${completionTokens} / 
+      text: `Tokens Usage Prompt: ${promptTokens} /
+			Completion: ${completionTokens} /
 			Total: ${totalTokens}`
     });
   }
@@ -279,9 +292,9 @@ ${this.plugin.settings.defaultPrompt}
         throw new Error("Unexpected API response format");
       }
     } catch (error) {
-      console.error("Error during API request:", error);
+      console.error("Error during API request:", extractErrorMessage(error));
       new import_obsidian.Notice(
-        "Error during API request: " + error.message
+        "Error during API request: " + extractErrorMessage(error)
       );
     }
   }
@@ -327,7 +340,7 @@ ${receivedAPIText}
       navigator.clipboard.writeText(receivedAPIText).then(() => {
         new import_obsidian.Notice("Copied to clipboard!");
       }).catch((error) => {
-        console.error("Error copying to clipboard:", error);
+        console.error("Error copying to clipboard:", extractErrorMessage(error));
         new import_obsidian.Notice("Error copying to clipboard");
       });
     } else {

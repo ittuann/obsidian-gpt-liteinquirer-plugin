@@ -31,7 +31,8 @@ The Lightweight ChatGPT Plugin is a fast, easy-to-use, and non-intrusive AI assi
 
 If you enjoy this plugin or would like to show your support, please consider giving it a free [Star ✨](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin) on GitHub~
 
-**Install and view this plugin automatically within Obsidian: [Click here](https://obsidian.md/plugins?id=gpt-liteinquirer)**
+> [!NOTE]
+> **Install and view this plugin automatically within Obsidian: [Click here](https://obsidian.md/plugins?id=gpt-liteinquirer)**
 
 **Download manually: [Click here](https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin/releases/latest)**. You only need to manually download `main.js`, `styles.css` and `manifest.json` and put them in the `.obsidian\plugins\gpt-liteinquirer` folder.
 

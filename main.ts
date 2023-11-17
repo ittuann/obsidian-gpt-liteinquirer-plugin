@@ -37,6 +37,14 @@ const DEFAULT_SETTINGS: LightweightChatGPTPluginSettings = {
 	showSidebarIcon: true
 }
 
+function extractErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+        return error.message;
+    } else {
+        return String(error);
+    }
+}
+
 export default class LightweightChatGPTPlugin extends Plugin {
 	settings: LightweightChatGPTPluginSettings;
 	ribbonIconEl: HTMLElement;
@@ -45,8 +53,14 @@ export default class LightweightChatGPTPlugin extends Plugin {
 
 		try {
 			await this.loadSettings();
-		} catch (error) {
-			console.error('Error loading settings:', error);
+		} catch (error: Error | unknown) {
+			let message: string;
+			if (error instanceof Error) {
+				message = error.message;
+			} else {
+				message = String(error);
+			}
+			console.error('Error loading settings:', message);
 		}
 
 		this.app.workspace.onLayoutReady(() => {
@@ -61,8 +75,8 @@ export default class LightweightChatGPTPlugin extends Plugin {
             callback: () => {
 				try {
 					new LightweightChatGPTWindow(this.app, this).open();
-				} catch (error) {
-					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
+				} catch (error: unknown) {
+					console.error('Error opening Lightweight ChatGPT Plugin Window:', extractErrorMessage(error));
 				}
 			}
             // hotkeys: [
@@ -75,8 +89,8 @@ export default class LightweightChatGPTPlugin extends Plugin {
 
 		try {
 			this.addSettingTab(new LightweightChatGPTSettingTab(this.app, this));
-		} catch (error) {
-			console.error('Error adding settings tab:', error);
+		} catch (error: unknown) {
+			console.error('Error adding settings tab:', extractErrorMessage(error));
 		}
 
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
@@ -93,12 +107,12 @@ export default class LightweightChatGPTPlugin extends Plugin {
 			this.ribbonIconEl = this.addRibbonIcon('feather', 'GPT-LiteInquirer', (evt: MouseEvent) => {
 				try {
 					new LightweightChatGPTWindow(this.app, this).open();
-				} catch (error) {
-					console.error('Error opening Lightweight ChatGPT Plugin Window:', error);
+				} catch (error: unknown) {
+					console.error('Error opening Lightweight ChatGPT Plugin Window:', extractErrorMessage(error));
 				}
 			});
-		} catch (error) {
-			console.error('Error adding sidebar icon:', error);
+		} catch (error: unknown) {
+			console.error('Error adding sidebar icon:', extractErrorMessage(error));
 		}
 
 		// Perform additional things with the ribbon
@@ -109,8 +123,8 @@ export default class LightweightChatGPTPlugin extends Plugin {
 		if (this.ribbonIconEl) {
 			try {
 				this.ribbonIconEl.remove();
-			} catch (error) {
-				console.error('Error closing sidebar icon:', error);
+			} catch (error: unknown) {
+				console.error('Error closing sidebar icon:', extractErrorMessage(error));
 			}
 		}
 	}
@@ -170,7 +184,7 @@ class LightweightChatGPTWindow extends Modal {
 			this.inputTextArea.value = '';
 		}
 
-		this.inputTextArea.addEventListener('keydown', (event) => {
+		this.inputTextArea.addEventListener<'keydown'>('keydown', (event) => {
 			if (event.key === 'Enter' && !event.shiftKey && !event.ctrlKey) {
 				event.preventDefault();
 				this.insertAtCursor(this.inputTextArea, '\n');
@@ -188,7 +202,7 @@ class LightweightChatGPTWindow extends Modal {
 
 		const maxTokensLabelContainer = maxTokensContainer.createEl('div');
 		maxTokensLabelContainer.createEl('label', { text: 'Max tokens:' });
-        const maxTokensDescription = maxTokensLabelContainer.createEl('p', { text: 'Max OpenAI ChatGpt Tokens' });
+        const maxTokensDescription = maxTokensLabelContainer.createEl('p', { text: 'Max OpenAI ChatGPT Tokens' });
         maxTokensDescription.classList.add('max-tokens-description');
 
 		this.maxTokensInput = maxTokensContainer.createEl('input', { type: 'number' });
@@ -199,7 +213,7 @@ class LightweightChatGPTWindow extends Modal {
 		this.maxTokensInput.value = this.plugin.settings.maxTokens.toString();
 
 		// Listener for maxTokensInput input event
-		this.maxTokensInput.addEventListener('input', () => {
+		this.maxTokensInput.addEventListener<'input'>('input', () => {
 			if (parseInt(this.maxTokensInput.value) > parseInt(this.maxTokensInput.max)) {
                 this.maxTokensInput.value = this.maxTokensInput.max;
                 new Notice(`Max tokens cannot exceed ${this.maxTokensInput.max}`);
@@ -212,7 +226,7 @@ class LightweightChatGPTWindow extends Modal {
 		// Send Button
 		const buttonSendContainer = contentEl.createEl('div');
 		buttonSendContainer.style.marginTop = '1rem';
-		const sendButton = buttonSendContainer.createEl('button', { 
+		const sendButton = buttonSendContainer.createEl('button', {
 			text: 'Send'
 		}, (el: HTMLButtonElement) => {
 			el.style.backgroundColor = 'green';
@@ -241,9 +255,9 @@ class LightweightChatGPTWindow extends Modal {
 		const addToPostButton = buttonsBottomContainer.createEl('button', { text: 'Add to current document' });
 		addToPostButton.style.marginRight = '1rem';
 		addToPostButton.style.display = 'none';
-		
+
 		// Listener for sendButton click event
-		sendButton.addEventListener('click', async () => {
+		sendButton.addEventListener<'click'>('click', async () => {
 			if (!parseInt(this.maxTokensInput.value)) {
 				new Notice(`Use the default value of ${this.plugin.settings.maxTokens.toString()} for max Tokens`);
 				this.maxTokensInput.value = this.plugin.settings.maxTokens.toString();
@@ -267,7 +281,7 @@ class LightweightChatGPTWindow extends Modal {
 			this.isSendingRequest = true;
 			sendButton.textContent = 'Sending ...';
 			sendButton.textContent = 'Waiting for API full response ...';
-			
+
 			try {
 				new Notice('Sending...');
 				this.responseAPIText = await this.sendRequestToChatGPT();
@@ -282,19 +296,19 @@ class LightweightChatGPTWindow extends Modal {
 				responseDividerLine.style.display = 'block';
 				copyToClipboardButton.style.display = 'block';
 				addToPostButton.style.display = 'block';
-			} catch (error) {
+			} catch (error: unknown) {
 				sendButton.textContent = 'Send';
-				console.error('Error during API request:', error);
+				console.error('Error during API request:', extractErrorMessage(error));
 			} finally {
 				this.isSendingRequest = false;
 			}
 		});
 
-		copyToClipboardButton.addEventListener('click', () => {
+		copyToClipboardButton.addEventListener<'click'>('click', () => {
 			this.copyToClipboard(this.responseAPIText);
 		});
 
-		addToPostButton.addEventListener('click', () => {
+		addToPostButton.addEventListener<'click'>('click', () => {
 			this.appendToCurrentNote(this.inputTextArea.value, this.responseAPIText, this.plugin.settings.insertionMode);
 		});
 	}
@@ -302,16 +316,16 @@ class LightweightChatGPTWindow extends Modal {
 	async displayTokensUsage(promptTokens: number, completionTokens: number, totalTokens: number) {
 		this.displayTokensUsageContainer.empty();
 
-		this.displayTokensUsageContainer.createEl('p', { 
-			text: `Tokens Usage Prompt: ${promptTokens} / 
-			Completion: ${completionTokens} / 
-			Total: ${totalTokens}` 
+		this.displayTokensUsageContainer.createEl('p', {
+			text: `Tokens Usage Prompt: ${promptTokens} /
+			Completion: ${completionTokens} /
+			Total: ${totalTokens}`
 		});
 	}
 
 	async sendRequestToChatGPT() {
 		const maxTokens = parseInt(this.maxTokensInput.value);
-		
+
 		try {
 			const response = await request({
 				url: this.plugin.settings.apiUrl + this.plugin.settings.apiUrlPath,
@@ -349,11 +363,11 @@ class LightweightChatGPTWindow extends Modal {
 			} else {
 				throw new Error('Unexpected API response format');
 			}
-		} catch (error) {
+		} catch (error: unknown) {
 			// Handle errors
-			console.error('Error during API request:', error);
+			console.error('Error during API request:', extractErrorMessage(error));
 			new Notice(
-				'Error during API request: ' + error.message
+				'Error during API request: ' + extractErrorMessage(error)
 			);
 		}
 	}
@@ -373,7 +387,7 @@ class LightweightChatGPTWindow extends Modal {
 			new Notice('No text to add');
 			return;
 		}
-		
+
 		const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
 		const activeLeaf = activeView?.leaf;
 		if (activeView && activeLeaf && activeLeaf.view instanceof MarkdownView) {
@@ -401,8 +415,8 @@ class LightweightChatGPTWindow extends Modal {
 		if (receivedAPIText.length > 0) {
 			navigator.clipboard.writeText(receivedAPIText).then(() => {
 				new Notice('Copied to clipboard!');
-			}).catch((error) => {
-				console.error('Error copying to clipboard:', error);
+			}).catch((error: unknown) => {
+				console.error('Error copying to clipboard:', extractErrorMessage(error));
 				new Notice('Error copying to clipboard');
 			});
 		} else {
@@ -509,7 +523,7 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Default Max Tokens')
-			.setDesc(this.plugin.settings.chatGPTModel === "gpt-4" 
+			.setDesc(this.plugin.settings.chatGPTModel === "gpt-4"
 				? 'Enter the maximum number of tokens for the API response (integer, min: 1, max: 4096)'
 				: 'Enter the maximum number of tokens for the API response (integer, min: 1, max: 2048)')
 			.addText(text => text
@@ -581,12 +595,12 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 						this.plugin.removeSidebarIcon();
 					}
 				}));
-		
+
 		const politeMessage = containerEl.createEl('p', {
 			cls: 'settings-polite-message',
 		});
 		politeMessage.textContent = 'If you enjoy this plugin or would like to show your support, please consider giving it a free star on GitHub~ Your appreciation means a lot to me!';
-		
+
 		const githubLink = containerEl.createEl('div', {
 			cls: 'settings-github-link-container',
 		});
@@ -596,7 +610,7 @@ class LightweightChatGPTSettingTab extends PluginSettingTab {
 		githubAnchor.href = 'https://github.com/ittuann/obsidian-gpt-liteinquirer-plugin';
 		githubAnchor.target = '_blank';
 		githubAnchor.rel = 'noopener';
-		
+
 		const githubLogo = githubAnchor.createEl('img', {
 			cls: 'settings-github-logo',
 		});
